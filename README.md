@@ -4,6 +4,9 @@ To use solar on fuel master we need to use container because of
 python2.6 there. Also solar itself relies on several services.
 
 ```
+yum -y install git
+git clone -b f2s https://github.com/Mirantis/solar.git
+
 docker run --name riak -d -p 8087:8087 -p 8098:8098 tutum/riak
 
 docker run --name redis -d -p 6379:6379 -e REDIS_PASS=**None** tutum/redis
@@ -28,7 +31,8 @@ found at f2s/patches
 
 #fsclient.py
 
-This script helps to create solar resource with some of nailgun data
+This script helps to create solar resource with some of nailgun data.
+Note, you should run it inside of the solar container.
 
 `./f2s/fsclient.py master 1`
 Accepts cluster id, prepares transports for master + generate keys task
@@ -83,3 +87,23 @@ on fuel master.
 ```
 
 All of this things will be automated by solar eventually
+
+#basic troubleshooting
+
+If there are any Fuel plugin installed, you should manually
+create a stanza for it in the `./f2s/resources/role_data/meta.yaml`,
+like:
+```
+input:
+  foo_plugin_name:
+    value: null
+```
+
+And regenerate the data from nailgun,
+
+To regenerate the deployment data to Solar resources make
+```
+solar res clear_all
+```
+
+and repeat all of the fsclient.py and fetching nailgun data steps
