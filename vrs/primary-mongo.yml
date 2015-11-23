@@ -5,6 +5,7 @@ resources:
   location: '{{node}}'
   values:
     env: '{{env}}'
+    puppet_modules: /etc/puppet/modules
     uid: '{{index}}'
 - id: fuel_pkgs{{index}}
   from: f2s/resources/fuel_pkgs
