@@ -2,8 +2,8 @@ id: cluster-haproxy
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/cluster-haproxy/cluster-haproxy.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/cluster-haproxy/cluster-haproxy.pp
 input:
   database_vip:
     value: null

@@ -109,12 +109,13 @@ class Task(object):
                 ('version', '8.0'),
                 ('inputs', {})])
         elif self.data['type'] == 'puppet':
+            man_path = self.data['parameters']['puppet_manifest']
             data = OrderedDict([('id', self.name),
                     ('handler', 'puppetv2'),
                     ('version', '8.0'),
                     ('actions', {
-                        'run': 'run.pp',
-                        'update': 'run.pp'}),
+                        'run': man_path,
+                        'update': man_path}),
                     ('input', self.inputs()),])
         else:
             raise NotImplemented('Support for %s' % self.data['type'])

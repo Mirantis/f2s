@@ -2,8 +2,8 @@ id: glance
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/glance/glance.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/glance/glance.pp
 input:
   amqp_hosts:
     value: null

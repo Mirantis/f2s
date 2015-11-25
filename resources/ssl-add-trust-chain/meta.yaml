@@ -2,8 +2,8 @@ id: ssl-add-trust-chain
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/ssl/ssl_add_trust_chain.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/ssl/ssl_add_trust_chain.pp
 input:
   fqdn:
     value: null

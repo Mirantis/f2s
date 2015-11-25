@@ -2,8 +2,8 @@ id: enable_nova_compute_service
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/astute/enable_compute.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/astute/enable_compute.pp
 input:
   fqdn:
     value: null

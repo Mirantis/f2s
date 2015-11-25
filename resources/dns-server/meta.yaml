@@ -2,8 +2,8 @@ id: dns-server
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/dns/dns-server.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/dns/dns-server.pp
 input:
   external_dns:
     value: null

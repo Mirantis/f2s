@@ -2,8 +2,8 @@ id: ntp-server
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/ntp/ntp-server.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/ntp/ntp-server.pp
 input:
   external_ntp:
     value: null

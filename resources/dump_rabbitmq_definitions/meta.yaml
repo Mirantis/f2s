@@ -2,8 +2,8 @@ id: dump_rabbitmq_definitions
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/astute/dump_rabbitmq_definitions.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/astute/dump_rabbitmq_definitions.pp
 input:
   fqdn:
     value: null

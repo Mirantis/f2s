@@ -2,8 +2,8 @@ id: murano
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/murano/murano.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/murano/murano.pp
 input:
   amqp_hosts:
     value: null

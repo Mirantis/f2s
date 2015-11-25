@@ -2,8 +2,8 @@ id: api-proxy
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/api-proxy/api-proxy.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/api-proxy/api-proxy.pp
 input:
   apache_ports:
     value: null

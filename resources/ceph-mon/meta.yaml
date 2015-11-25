@@ -2,8 +2,8 @@ id: ceph-mon
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/ceph/mon.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/ceph/mon.pp
 input:
   ceph_monitor_nodes:
     value: null

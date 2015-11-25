@@ -2,8 +2,8 @@ id: top-role-compute-vmware
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/vmware/compute-vmware.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/vmware/compute-vmware.pp
 input:
   fqdn:
     value: null

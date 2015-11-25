@@ -2,8 +2,8 @@ id: horizon
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/horizon/horizon.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/horizon/horizon.pp
 input:
   apache_ports:
     value: null

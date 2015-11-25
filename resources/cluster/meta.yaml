@@ -2,8 +2,8 @@ id: cluster
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/cluster/cluster.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/cluster/cluster.pp
 input:
   corosync_roles:
     value: null

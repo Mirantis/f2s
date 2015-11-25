@@ -2,8 +2,8 @@ id: workloads_collector_add
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/keystone/workloads_collector_add.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/keystone/workloads_collector_add.pp
 input:
   fqdn:
     value: null

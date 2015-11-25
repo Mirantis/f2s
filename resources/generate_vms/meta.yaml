@@ -2,8 +2,8 @@ id: generate_vms
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/generate_vms/generate_vms.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/generate_vms/generate_vms.pp
 input:
   fqdn:
     value: null

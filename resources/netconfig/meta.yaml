@@ -2,8 +2,8 @@ id: netconfig
 handler: puppetv2
 version: '8.0'
 actions:
-  run: run.pp
-  update: run.pp
+  run: /etc/puppet/modules/osnailyfacter/modular/netconfig/netconfig.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/netconfig/netconfig.pp
 input:
   default_gateway:
     value: null

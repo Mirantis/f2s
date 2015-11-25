@@ -31,12 +31,11 @@ if $use_neutron and ($controller or ($dvr and $compute)) {
   prepare_network_config($network_scheme)
 
   $ha_agent                = try_get_value($neutron_advanced_config, 'l3_agent_ha', true)
-  $external_network_bridge = get_network_role_property('neutron/floating', 'interface')
 
   class { 'neutron::agents::l3':
     debug                    => $debug,
     metadata_port            => $metadata_port,
-    external_network_bridge  => $external_network_bridge,
+    external_network_bridge  => ' ',
     manage_service           => true,
     enabled                  => true,
     router_delete_namespaces => true,
@@ -54,6 +53,12 @@ if $use_neutron and ($controller or ($dvr and $compute)) {
   package { 'neutron':
     name   => 'binutils',
     ensure => 'installed',
+  }
+
+  # override neutron options
+  $override_configuration = hiera_hash('configuration', {})
+  override_resources { 'neutron_l3_agent_config':
+    data => $override_configuration['neutron_l3_agent_config']
   }
 
 }
