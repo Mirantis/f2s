@@ -1,17 +1,17 @@
 id: prep_tasks
 resources:
-    - id: sources{{index}}
+    - id: sources#{index}#
       from: resources/sources
-      location: {{node}}
+      location: #{node}#
       values:
         sources:
-            - src: /var/lib/fuel/keys/{{env}}/neutron
+            - src: /var/lib/fuel/keys/#{env}#/neutron
               dst: /var/lib/astute
-            - src: /var/lib/fuel/keys/{{env}}/nova
+            - src: /var/lib/fuel/keys/#{env}#/nova
               dst: /var/lib/astute
-            - src: /var/lib/fuel/keys/{{env}}/mysql
+            - src: /var/lib/fuel/keys/#{env}#/mysql
               dst: /var/lib/astute
-            - src: /var/lib/fuel/keys/{{env}}/mongo
+            - src: /var/lib/fuel/keys/#{env}#/mongo
               dst: /var/lib/astute
             - src: /etc/puppet/modules
               dst: /etc/puppet/
@@ -22,8 +22,8 @@ events:
         action: run
         with_tags:
             - resource=genkeys
-      depend_action: sources{{index}}.run
+      child_action: sources#{index}#.run
     - type: depends_on
       state: success
-      parent_action: sources{{index}}.run
-      depend_action: role_data{{index}}.run
+      parent_action: sources#{index}#.run
+      child_action: role_data#{index}#.run
