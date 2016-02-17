@@ -3,7 +3,7 @@
 import os
 
 import click
-from solar.core.resource import virtual_resource as vr
+from solar.core.resource import composer as cr
 from solar.dblayer.model import ModelMeta
 
 
@@ -35,7 +35,7 @@ class DumbSource(object):
 
     def nodes(self, uids):
         ip_mask = '10.0.0.%s'
-        return [(uid, ip_mask % uid, 1) for uid in uids]
+        return [(int(uid), ip_mask % uid, 1) for uid in uids]
 
     def roles(self, uid):
         return ['primary-controller']
@@ -52,26 +52,26 @@ else:
 @click.argument('uids', nargs=-1)
 def nodes(uids):
     for uid, ip, env in source.nodes(uids):
-        vr.create('fuel_node', 'f2s/vrs/fuel_node.yaml',
+        cr.create('fuel_node', 'vrs/fuel_node',
             {'index': uid, 'ip': ip})
 
 @main.command()
 @click.argument('env')
 def master(env):
     master = source.master()
-    vr.create('master', 'f2s/vrs/fuel_node.yaml',
+    cr.create('master', 'vrs/fuel_node',
         {'index': master[0], 'ip': master[1]})
 
-    vr.create('genkeys', 'f2s/vrs/genkeys.yaml', {
+    cr.create('genkeys', 'vrs/genkeys', {
         'node': 'node'+master[0],
-        'index': env})
+        'index': int(env)})
 
 @main.command()
 @click.argument('uids', nargs=-1)
 def prep(uids):
     for uid, ip, env in source.nodes(uids):
-        vr.create('prep', 'f2s/vrs/prep.yaml',
-            {'index': uid, 'env': env, 'node': 'node'+uid})
+        cr.create('prep', 'vrs/prep',
+            {'index': uid, 'env': env, 'node': 'node'+str(uid)})
 
 
 @main.command()
@@ -80,8 +80,8 @@ def roles(uids):
 
     for uid, ip, env in source.nodes(uids):
         for role in source.roles(uid):
-            vr.create(role, 'f2s/vrs/'+role +'.yml',
-                {'index': uid, 'env': env, 'node': 'node'+uid})
+            cr.create(role, 'vrs/'+role,
+                {'index': uid, 'env': env, 'node': 'node'+str(uid)})
 
 
 if __name__ == '__main__':
