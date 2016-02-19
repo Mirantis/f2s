@@ -1,21 +1,20 @@
 #How to install on fuel master?
 
-To use solar on fuel master we need to use container because of
-python2.6 there. Also solar itself relies on several services.
-
+First add repository for zeromq:
 ```
-yum -y install git
-git clone -b f2s https://github.com/Mirantis/solar.git
-
-docker run --name riak -d -p 8087:8087 -p 8098:8098 tutum/riak
-
-docker run --name redis -d -p 6379:6379 -e REDIS_PASS=**None** tutum/redis
-
-docker run --name solar -d -v /root/solar/solar:/solar -v /root/solar/solard:/solard -v /root/solar/templates:/templates \
--v /root/solar/resources:/resources -v /root/solar/f2s:/f2s \
--v /var/lib/fuel:/var/lib/fuel -v /root/.config/fuel/fuel_client.yaml:/etc/fuel/client/config.yaml -v /etc/puppet/modules:/etc/puppet/modules \
--v /root/.ssh:/root/.ssh \
---link=riak:riak --link=redis:redis solarproject/solar-celery:f2s
+cat << EOF > /etc/yum.repos.d/zmq.repo
+[home_fengshuo_zeromq]
+name=The latest stable of zeromq builds (CentOS_CentOS-6)
+type=rpm-md
+baseurl=http://download.opensuse.org/repositories/home:/fengshuo:/zeromq/CentOS_CentOS-6/
+gpgcheck=1
+gpgkey=http://download.opensuse.org/repositories/home:/fengshuo:/zeromq/CentOS_CentOS-6/repodata/repomd.xml.key
+enabled=1
+EOF
+```
+Then install solar:
+```
+pip install solar
 ```
 
 #f2s.py
