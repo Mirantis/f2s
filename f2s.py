@@ -23,7 +23,9 @@ RESOURCE_TMP_WORKDIR = os.path.join(CURDIR, 'tmp/resources')
 ensure_dir(RESOURCE_TMP_WORKDIR)
 RESOURCE_DIR = os.path.join(CURDIR, 'resources')
 VR_TMP_DIR = os.path.join(CURDIR, 'tmp/vrs')
+CONDITONAL = os.path.join(VR_TMP_DIR, 'conditional')
 ensure_dir(VR_TMP_DIR)
+ensure_dir(CONDITIONAL)
 INPUTS_LOCATION = "/root/current/"
 DEPLOYMENT_GROUP_PATH = os.path.join(LIBRARY_PATH,
     'deployment', 'puppet', 'deployment_groups', 'tasks.yaml')
@@ -163,23 +165,6 @@ class Task(object):
                 in set(data) if '::' not in key}
 
 
-class RoleData(Task):
-
-    name = 'role_data'
-
-    def meta(self):
-        data = {'id': self.name,
-                'handler': 'puppetv2',
-                'version': '8.0',
-                'inputs': self.inputs(),
-                'manager': 'globals.py'}
-        return yaml.safe_dump(data, default_flow_style=False)
-
-    @property
-    def actions(self):
-        pass
-
-
 class DGroup(object):
 
     filtered = ['hiera', 'deploy_start']
@@ -195,7 +180,7 @@ class DGroup(object):
                 continue
             yield OrderedDict(
                 [('id', t.name),
-                 ('from', 'f2s/resources/'),
+                 ('from', 'f2s/resources/' + t.name),
                  ('location', "{{node}}")])
 
     def events(self):
@@ -210,7 +195,9 @@ class DGroup(object):
                 yield OrderedDict([
                     ('type', 'depends_on'),
                     ('state', 'success'),
-                    ('parent_action', dep + '{{index}}.run'),
+                    ('parent', {
+                        'with_tags': ['resource=' + dep, 'node={{index}}'],
+                        'action': 'run'}),
                     ('depend_action', t.name + '{{index}}.run')])
             for dep in set(outer):
                 if dep in self.filtered:
@@ -236,15 +223,105 @@ class DGroup(object):
         return os.path.join(VR_TMP_DIR, self.name + '.yml')
 
 
+class SingleTaskComposition(object):
+    """
+    SingleTaskComposition stores all relations to other resources
+    """
+    def __init__(self, task):
+        self.task = task
+        self.succ = set()
+        self.pred = set()
+        self.succ_cross = set()
+        self.pred_cross = set()
+
+    def composition(self):
+        return OrderedDict(
+            [('name', 'composition_' + self.task.name),
+             ('resources', [self.resource]),
+             ('events', self.events)])
+
+    @property
+    def resource(self):
+        return OrderedDict(
+                [('id', self.task.name),
+                 ('from', 'fuel/resources/' + self.taks.name),
+                 ('location', "{{node}}")])
+
+    def event(self, tags, child):
+        return OrderedDict([
+                    ('type', 'depends_on'),
+                    ('state', 'success'),
+                    ('parent', {
+                        'with_tags': tags,
+                        'action': 'run'}),
+                    ('depend_action', child + '{{index}}.run')])
+
+    @property
+    def events(self):
+        tags = ['resource=' + self.task.name]
+        for node in self.succ:
+            yield self.event(
+                ['resource=' + self.task.name, 'node={{node}}'], node)
+        for node in self.pred:
+            yield self.event(
+                ['resource=' + node, 'node={{node}}'], self.task.name)
+
+        for node in self.succ_cross:
+            yield self.event(
+                ['resource=' + self.task.name], node)
+
+        for node in self.pred_cross:
+            yield self.event(
+                ['resource=' + node], self.task.name)
+
+    def __hash__(self):
+        return hash(self.task.name)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return other.task.name == self.task.name
+        elif isinstance(other, basestring):
+            return other == self.task.name
+
+    @property
+    def relative_path(self):
+        return 'fuel/vrs/singles/' + self.task.name
+
+
+class CollectionComposition(object):
+    """
+    Represents arbitrary grouping of SinglesTaskCompositions,
+    on compilation produces composition file with list of paths to resources
+    """
+
+    def __init__(self, name, collection, grouping='composition'):
+        self.name = name
+        self.collection = collection
+        self.grouping = grouping
+
+    def composition(self):
+        return OrderedDict(
+            [('id', self.name),
+             ('resources': [{'from': s.relative_path}
+                            for s in self.collection]),
+             ('tags', self.grouping + '=' + self.name)])
+
+    @property
+    def relative_path(self):
+        return 'fuel/vrs'
+
+
 def get_files(base_dir, file_pattern='*tasks.yaml'):
     for root, _dirs, files in os.walk(base_dir):
         for file_name in files:
             if fnmatch(file_name, file_pattern):
                 yield root, file_name
 
+
 def load_data(base, file_name):
     with open(os.path.join(base, file_name)) as f:
         return yaml.load(f)
+
 
 def preview(task):
     print 'PATH'
@@ -280,15 +357,11 @@ def get_graph():
         dg.add_node(t.name, t=t)
     return dg
 
-def dgroup_subgraph(dg, dgroup):
-    preds = []
-    preds = [p for p in dg.predecessors(dgroup)
-             if dg.node[p]['t'].type == 'puppet']
-    return dg.subgraph(preds)
 
 @click.group()
 def main():
     pass
+
 
 @main.command(help='converts tasks into resources')
 @click.argument('tasks', nargs=-1)
@@ -300,7 +373,7 @@ def t2r(tasks, t, p, c):
         clean_resources()
 
     for task in get_tasks():
-        if not task.type in VALID_TASKS:
+        if task.type not in VALID_TASKS:
             continue
 
         if task.name in tasks or tasks == ():
@@ -317,32 +390,26 @@ def g2vr(groups, c):
     if c:
         clean_vr()
 
+    collection_compositions = {}
+    single_compositions = {}
     dg = get_graph()
-    dgroups = [n for n in dg if 't' in dg.node[n] and
-               dg.node[n]['t'].type == 'group']
-
-    for group in dgroups:
-        if groups and group not in groups:
+    for node in nx.topological_sort(dg):
+        if 't' in dg.node[node] and dg.node[node]['t'].type in VALID_TASKS:
+            pass
+        else:
             continue
 
-        ordered = []
-        dsub = dg.subgraph(dg.predecessors(group))
-        for t in nx.topological_sort(dsub):
-            single_node = []
-            cross_node = list(dg.node[t]['t'].cross_node)
-            for p in dg.predecessors(t):
-                if not dg.node[p]['t'].type in VALID_TASKS:
-                    continue
+        task = dg.node[node]['t']
+        if task.name not in single_compositions:
+            single_compositions[task.name] = SingleTaskComposition(task)
+            single_compositions[task.name].pred.update(
+                dg.predecessors(node))
+            single_compositions[task.name].pred_cross.update(
+                task.cross_node)
 
-                if p in dsub:
-                    single_node.append(p)
-            if dg.node[t]['t'].type in VALID_TASKS:
-                ordered.append((dg.node[t]['t'], single_node, cross_node))
 
-        obj = DGroup(group, ordered)
-        with open(obj.path, 'w') as f:
-            f.write(obj.meta())
-        # based on inner/outer aggregation configure joins in events
+
+
 
 if __name__ == '__main__':
     main()
