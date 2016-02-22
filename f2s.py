@@ -18,7 +18,7 @@ def ensure_dir(dir):
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
 
-LIBRARY_PATH = os.path.join(CURDIR, 'fuel-library')
+LIBRARY_PATH = os.path.join('..', 'fuel-library')
 RESOURCE_TMP_WORKDIR = os.path.join(CURDIR, 'tmp/resources')
 ensure_dir(RESOURCE_TMP_WORKDIR)
 RESOURCE_DIR = os.path.join(CURDIR, 'resources')
@@ -30,9 +30,11 @@ DEPLOYMENT_GROUP_PATH = os.path.join(LIBRARY_PATH,
 
 VALID_TASKS = ('puppet', 'skipped')
 
+
 def clean_resources():
     shutil.rmtree(RESOURCE_TMP_WORKDIR)
     ensure_dir(RESOURCE_TMP_WORKDIR)
+
 
 def clean_vr():
     shutil.rmtree(VR_TMP_DIR)
@@ -73,6 +75,14 @@ class Task(object):
         if 'tasks' in data:
             for req in data['tasks']:
                 yield req, self.name
+
+    @property
+    def cross_node(self):
+        for dep in self.data.get('cross-depends', ()):
+            yield dep['name']
+
+    def is_conditional(self):
+        return bool(self.data.get('condition'))
 
     @property
     def manifest(self):
@@ -116,7 +126,7 @@ class Task(object):
                     ('actions', {
                         'run': man_path,
                         'update': man_path}),
-                    ('input', self.inputs()),])
+                    ('input', {}),])
         else:
             raise NotImplemented('Support for %s' % self.data['type'])
         return ordered_dump(data, default_flow_style=False)
@@ -172,7 +182,7 @@ class RoleData(Task):
 
 class DGroup(object):
 
-    filtered = ['globals', 'hiera', 'deploy_start']
+    filtered = ['hiera', 'deploy_start']
 
     def __init__(self, name, tasks):
         self.name = name
@@ -180,35 +190,18 @@ class DGroup(object):
 
     def resources(self):
 
-        yield OrderedDict(
-                [('id', RoleData.name+"{{index}}"),
-                 ('from', 'f2s/resources/'+RoleData.name),
-                 ('location', "{{node}}"),
-                 ('values', {'uid': '{{index}}',
-                             'env': '{{env}}',
-                             'puppet_modules': '/etc/puppet/modules'})])
-
         for t, _, _ in self.tasks:
             if t.name in self.filtered:
                 continue
-
             yield OrderedDict(
-                [('id', t.name+"{{index}}"),
-                 ('from', 'f2s/resources/'+t.name),
-                 ('location', "{{node}}"),
-                 ('values_from', RoleData.name+"{{index}}")])
-
+                [('id', t.name),
+                 ('from', 'f2s/resources/'),
+                 ('location', "{{node}}")])
 
     def events(self):
         for t, inner, outer in self.tasks:
             if t.name in self.filtered:
                 continue
-
-            yield OrderedDict([
-                    ('type', 'depends_on'),
-                    ('state', 'success'),
-                    ('parent_action', RoleData.name + '{{index}}.run'),
-                    ('depend_action', t.name + '{{index}}.run')])
 
             for dep in set(inner):
                 if dep in self.filtered:
@@ -259,8 +252,9 @@ def preview(task):
     print 'META'
     print task.meta()
     print 'ACTIONS'
-    for action in task.actions():
+    for action in task.actions:
         print 'src=%s dst=%s' % action
+
 
 def create(task):
     ensure_dir(task.dst_path)
@@ -287,6 +281,7 @@ def get_graph():
     return dg
 
 def dgroup_subgraph(dg, dgroup):
+    preds = []
     preds = [p for p in dg.predecessors(dgroup)
              if dg.node[p]['t'].type == 'puppet']
     return dg.subgraph(preds)
@@ -323,7 +318,8 @@ def g2vr(groups, c):
         clean_vr()
 
     dg = get_graph()
-    dgroups = [n for n in dg if dg.node[n]['t'].type == 'group']
+    dgroups = [n for n in dg if 't' in dg.node[n] and
+               dg.node[n]['t'].type == 'group']
 
     for group in dgroups:
         if groups and group not in groups:
@@ -332,19 +328,16 @@ def g2vr(groups, c):
         ordered = []
         dsub = dg.subgraph(dg.predecessors(group))
         for t in nx.topological_sort(dsub):
-            inner_preds = []
-            outer_preds = []
+            single_node = []
+            cross_node = list(dg.node[t]['t'].cross_node)
             for p in dg.predecessors(t):
                 if not dg.node[p]['t'].type in VALID_TASKS:
                     continue
 
                 if p in dsub:
-                    inner_preds.append(p)
-                else:
-                    outer_preds.append(p)
-
+                    single_node.append(p)
             if dg.node[t]['t'].type in VALID_TASKS:
-                ordered.append((dg.node[t]['t'], inner_preds, outer_preds))
+                ordered.append((dg.node[t]['t'], single_node, cross_node))
 
         obj = DGroup(group, ordered)
         with open(obj.path, 'w') as f:
