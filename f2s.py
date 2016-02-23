@@ -23,9 +23,7 @@ RESOURCE_TMP_WORKDIR = os.path.join(CURDIR, 'tmp/resources')
 ensure_dir(RESOURCE_TMP_WORKDIR)
 RESOURCE_DIR = os.path.join(CURDIR, 'resources')
 VR_TMP_DIR = os.path.join(CURDIR, 'tmp/vrs')
-CONDITONAL = os.path.join(VR_TMP_DIR, 'conditional')
 ensure_dir(VR_TMP_DIR)
-ensure_dir(CONDITIONAL)
 INPUTS_LOCATION = "/root/current/"
 DEPLOYMENT_GROUP_PATH = os.path.join(LIBRARY_PATH,
     'deployment', 'puppet', 'deployment_groups', 'tasks.yaml')
@@ -46,6 +44,7 @@ def clean_vr():
 def ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
     class OrderedDumper(Dumper):
         pass
+
     def _dict_representer(dumper, data):
         return dumper.represent_mapping(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
@@ -61,6 +60,7 @@ class Task(object):
         self.src_path = task_path
         self.name = self.data['id']
         self.type = self.data['type']
+        self.grouping = self.data.get('roles') or self.data.get('groups', [])
 
     def edges(self):
         data = self.data
@@ -165,64 +165,6 @@ class Task(object):
                 in set(data) if '::' not in key}
 
 
-class DGroup(object):
-
-    filtered = ['hiera', 'deploy_start']
-
-    def __init__(self, name, tasks):
-        self.name = name
-        self.tasks = tasks
-
-    def resources(self):
-
-        for t, _, _ in self.tasks:
-            if t.name in self.filtered:
-                continue
-            yield OrderedDict(
-                [('id', t.name),
-                 ('from', 'f2s/resources/' + t.name),
-                 ('location', "{{node}}")])
-
-    def events(self):
-        for t, inner, outer in self.tasks:
-            if t.name in self.filtered:
-                continue
-
-            for dep in set(inner):
-                if dep in self.filtered:
-                    continue
-
-                yield OrderedDict([
-                    ('type', 'depends_on'),
-                    ('state', 'success'),
-                    ('parent', {
-                        'with_tags': ['resource=' + dep, 'node={{index}}'],
-                        'action': 'run'}),
-                    ('depend_action', t.name + '{{index}}.run')])
-            for dep in set(outer):
-                if dep in self.filtered:
-                    continue
-
-                yield OrderedDict([
-                    ('type', 'depends_on'),
-                    ('state', 'success'),
-                    ('parent', {
-                        'with_tags': ['resource=' + dep],
-                        'action': 'run'}),
-                    ('depend_action', t.name + '{{index}}.run')])
-
-    def meta(self):
-        data = OrderedDict([
-            ('id', self.name),
-            ('resources', list(self.resources())),
-            ('events', list(self.events()))])
-        return ordered_dump(data, default_flow_style=False)
-
-    @property
-    def path(self):
-        return os.path.join(VR_TMP_DIR, self.name + '.yml')
-
-
 class SingleTaskComposition(object):
     """
     SingleTaskComposition stores all relations to other resources
@@ -238,14 +180,14 @@ class SingleTaskComposition(object):
         return OrderedDict(
             [('name', 'composition_' + self.task.name),
              ('resources', [self.resource]),
-             ('events', self.events)])
+             ('events', list(self.events))])
 
     @property
     def resource(self):
         return OrderedDict(
                 [('id', self.task.name),
-                 ('from', 'fuel/resources/' + self.taks.name),
-                 ('location', "{{node}}")])
+                 ('from', self.relative_path),
+                 ('location', "#{node}#")])
 
     def event(self, tags, child):
         return OrderedDict([
@@ -254,17 +196,17 @@ class SingleTaskComposition(object):
                     ('parent', {
                         'with_tags': tags,
                         'action': 'run'}),
-                    ('depend_action', child + '{{index}}.run')])
+                    ('depend_action', child + '#{index}#.run')])
 
     @property
     def events(self):
         tags = ['resource=' + self.task.name]
         for node in self.succ:
             yield self.event(
-                ['resource=' + self.task.name, 'node={{node}}'], node)
+                ['resource=' + self.task.name, 'node=#{node}#'], node)
         for node in self.pred:
             yield self.event(
-                ['resource=' + node, 'node={{node}}'], self.task.name)
+                ['resource=' + node, 'node=#{node}#'], self.task.name)
 
         for node in self.succ_cross:
             yield self.event(
@@ -284,8 +226,12 @@ class SingleTaskComposition(object):
             return other == self.task.name
 
     @property
+    def store_path(self):
+        return os.path.join(VR_TMP_DIR, 'vr_' + self.task.name + '.yaml')
+
+    @property
     def relative_path(self):
-        return 'fuel/vrs/singles/' + self.task.name
+        return 'f2s/vr_' + self.task.name
 
 
 class CollectionComposition(object):
@@ -302,13 +248,25 @@ class CollectionComposition(object):
     def composition(self):
         return OrderedDict(
             [('id', self.name),
-             ('resources': [{'from': s.relative_path}
+             ('resources', [OrderedDict(
+                 [('from', s.relative_path),
+                  ('input', {'node': '#{node}#', 'index': '#{index}'})])
                             for s in self.collection]),
              ('tags', self.grouping + '=' + self.name)])
 
     @property
+    def store_path(self):
+        return os.path.join(VR_TMP_DIR,
+                            '{}_{}.yaml'.format(self.grouping, self.name))
+
+    @property
     def relative_path(self):
-        return 'fuel/vrs'
+        return 'f2s/{}_{}'.format(self.grouping, self.name)
+
+
+def write_composition(composition):
+    with open(composition.store_path, 'w') as f:
+        f.write(ordered_dump(composition.composition()))
 
 
 def get_files(base_dir, file_pattern='*tasks.yaml'):
@@ -384,32 +342,38 @@ def t2r(tasks, t, p, c):
 
 
 @main.command(help='convert groups into templates')
-@click.argument('groups', nargs=-1)
 @click.option('-c', is_flag=True)
-def g2vr(groups, c):
+def g2vr(c):
     if c:
         clean_vr()
 
-    collection_compositions = {}
-    single_compositions = {}
+    collection = {}
+    singles = []
     dg = get_graph()
     for node in nx.topological_sort(dg):
-        if 't' in dg.node[node] and dg.node[node]['t'].type in VALID_TASKS:
-            pass
-        else:
+        if 't' not in dg.node[node]:
             continue
-
         task = dg.node[node]['t']
-        if task.name not in single_compositions:
-            single_compositions[task.name] = SingleTaskComposition(task)
-            single_compositions[task.name].pred.update(
-                dg.predecessors(node))
-            single_compositions[task.name].pred_cross.update(
-                task.cross_node)
+        if task.type in VALID_TASKS:
+            single = SingleTaskComposition(task)
+            single.pred.update(dg.predecessors(node))
+            single.pred_cross.update(task.cross_node)
+            singles.append(single)
 
+        elif task.type == 'group':
+            collection[task.name] = CollectionComposition(
+                task.name, [], 'role')
 
+    for single in singles:
+        for role in single.task.grouping:
+            # regexp
+            if role in collection:
+                collection[role].collection.append(single)
 
+        write_composition(single)
 
+    for coll in collection.values():
+        write_composition(coll)
 
 if __name__ == '__main__':
     main()
