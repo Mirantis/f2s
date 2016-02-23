@@ -1,0 +1,10 @@
+name: composition_fuel_pkgs
+resources:
+- {id: fuel_pkgs, from: f2s/vr_fuel_pkgs, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=setup_repositories, 'node=#{node}#']
+  depend_action: fuel_pkgs#{index}#.run

@@ -1,0 +1,22 @@
+name: composition_keystone-db
+resources:
+- {id: keystone-db, from: f2s/vr_keystone-db, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-database, 'node=#{node}#']
+  depend_action: keystone-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=database, 'node=#{node}#']
+  depend_action: keystone-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?database/']
+  depend_action: keystone-db#{index}#.run

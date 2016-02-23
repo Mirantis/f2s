@@ -1,0 +1,22 @@
+name: composition_horizon
+resources:
+- {id: horizon, from: f2s/vr_horizon, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-controller, 'node=#{node}#']
+  depend_action: horizon#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-controller, 'node=#{node}#']
+  depend_action: horizon#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=memcached]
+  depend_action: horizon#{index}#.run

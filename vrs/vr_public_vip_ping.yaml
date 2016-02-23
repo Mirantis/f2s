@@ -1,0 +1,10 @@
+name: composition_public_vip_ping
+resources:
+- {id: public_vip_ping, from: f2s/vr_public_vip_ping, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=post_deployment_start, 'node=#{node}#']
+  depend_action: public_vip_ping#{index}#.run

@@ -1,0 +1,29 @@
+name: composition_openstack-network-compute-nova
+resources:
+- {id: openstack-network-compute-nova, from: f2s/vr_openstack-network-compute-nova,
+  location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-agents-l3, 'node=#{node}#']
+  depend_action: openstack-network-compute-nova#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-common-config, 'node=#{node}#']
+  depend_action: openstack-network-compute-nova#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-agents-metadata, 'node=#{node}#']
+  depend_action: openstack-network-compute-nova#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?openstack-network-plugins-l2/']
+  depend_action: openstack-network-compute-nova#{index}#.run

@@ -1,0 +1,10 @@
+name: composition_primary-rabbitmq
+resources:
+- {id: primary-rabbitmq, from: f2s/vr_primary-rabbitmq, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-haproxy, 'node=#{node}#']
+  depend_action: primary-rabbitmq#{index}#.run

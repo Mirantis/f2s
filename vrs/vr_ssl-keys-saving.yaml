@@ -1,0 +1,10 @@
+name: composition_ssl-keys-saving
+resources:
+- {id: ssl-keys-saving, from: f2s/vr_ssl-keys-saving, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=firewall, 'node=#{node}#']
+  depend_action: ssl-keys-saving#{index}#.run

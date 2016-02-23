@@ -1,0 +1,22 @@
+name: composition_swift-rebalance-cron
+resources:
+- {id: swift-rebalance-cron, from: f2s/vr_swift-rebalance-cron, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-swift, 'node=#{node}#']
+  depend_action: swift-rebalance-cron#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=swift, 'node=#{node}#']
+  depend_action: swift-rebalance-cron#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?swift/']
+  depend_action: swift-rebalance-cron#{index}#.run

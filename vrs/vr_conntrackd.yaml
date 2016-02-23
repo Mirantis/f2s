@@ -1,0 +1,28 @@
+name: composition_conntrackd
+resources:
+- {id: conntrackd, from: f2s/vr_conntrackd, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=cluster, 'node=#{node}#']
+  depend_action: conntrackd#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-cluster, 'node=#{node}#']
+  depend_action: conntrackd#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=virtual_ips, 'node=#{node}#']
+  depend_action: conntrackd#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?cluster/']
+  depend_action: conntrackd#{index}#.run

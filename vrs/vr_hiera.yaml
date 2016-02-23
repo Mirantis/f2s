@@ -1,0 +1,10 @@
+name: composition_hiera
+resources:
+- {id: hiera, from: f2s/vr_hiera, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=deploy_start, 'node=#{node}#']
+  depend_action: hiera#{index}#.run

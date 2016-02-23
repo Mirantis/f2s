@@ -1,0 +1,11 @@
+name: composition_openstack-network-common-config
+resources:
+- {id: openstack-network-common-config, from: f2s/vr_openstack-network-common-config,
+  location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-start, 'node=#{node}#']
+  depend_action: openstack-network-common-config#{index}#.run

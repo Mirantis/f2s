@@ -1,0 +1,22 @@
+name: composition_top-role-cinder
+resources:
+- {id: top-role-cinder, from: f2s/vr_top-role-cinder, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=firewall, 'node=#{node}#']
+  depend_action: top-role-cinder#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=hosts, 'node=#{node}#']
+  depend_action: top-role-cinder#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-cinder]
+  depend_action: top-role-cinder#{index}#.run

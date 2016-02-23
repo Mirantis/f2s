@@ -1,0 +1,22 @@
+name: composition_ironic-db
+resources:
+- {id: ironic-db, from: f2s/vr_ironic-db, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-database, 'node=#{node}#']
+  depend_action: ironic-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=database, 'node=#{node}#']
+  depend_action: ironic-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?database/']
+  depend_action: ironic-db#{index}#.run

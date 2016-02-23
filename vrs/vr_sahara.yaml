@@ -1,0 +1,40 @@
+name: composition_sahara
+resources:
+- {id: sahara, from: f2s/vr_sahara, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=sahara-keystone, 'node=#{node}#']
+  depend_action: sahara#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-end, 'node=#{node}#']
+  depend_action: sahara#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=sahara-db, 'node=#{node}#']
+  depend_action: sahara#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=horizon, 'node=#{node}#']
+  depend_action: sahara#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=sahara-keystone]
+  depend_action: sahara#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=sahara-db]
+  depend_action: sahara#{index}#.run

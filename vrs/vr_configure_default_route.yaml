@@ -1,0 +1,10 @@
+name: composition_configure_default_route
+resources:
+- {id: configure_default_route, from: f2s/vr_configure_default_route, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=post_deployment_start, 'node=#{node}#']
+  depend_action: configure_default_route#{index}#.run

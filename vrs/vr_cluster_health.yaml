@@ -1,0 +1,22 @@
+name: composition_cluster_health
+resources:
+- {id: cluster_health, from: f2s/vr_cluster_health, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=cluster, 'node=#{node}#']
+  depend_action: cluster_health#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-cluster, 'node=#{node}#']
+  depend_action: cluster_health#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?cluster/']
+  depend_action: cluster_health#{index}#.run

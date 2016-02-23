@@ -1,0 +1,17 @@
+name: composition_disable_keystone_service_token
+resources:
+- {id: disable_keystone_service_token, from: f2s/vr_disable_keystone_service_token,
+  location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=upload_cirros, 'node=#{node}#']
+  depend_action: disable_keystone_service_token#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=upload_cirros]
+  depend_action: disable_keystone_service_token#{index}#.run

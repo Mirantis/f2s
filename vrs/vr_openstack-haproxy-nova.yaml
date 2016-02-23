@@ -1,0 +1,28 @@
+name: composition_openstack-haproxy-nova
+resources:
+- {id: openstack-haproxy-nova, from: f2s/vr_openstack-haproxy-nova, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=deploy_start, 'node=#{node}#']
+  depend_action: openstack-haproxy-nova#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-cluster-haproxy, 'node=#{node}#']
+  depend_action: openstack-haproxy-nova#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=cluster-haproxy, 'node=#{node}#']
+  depend_action: openstack-haproxy-nova#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?cluster-haproxy/']
+  depend_action: openstack-haproxy-nova#{index}#.run

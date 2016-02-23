@@ -1,0 +1,10 @@
+name: composition_openstack-network-routers-ha
+resources:
+- {id: openstack-network-routers-ha, from: f2s/vr_openstack-network-routers-ha, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=post_deployment_start, 'node=#{node}#']
+  depend_action: openstack-network-routers-ha#{index}#.run

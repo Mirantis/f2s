@@ -1,0 +1,46 @@
+name: composition_ironic-compute
+resources:
+- {id: ironic-compute, from: f2s/vr_ironic-compute, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-controller, 'node=#{node}#']
+  depend_action: ironic-compute#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-controller, 'node=#{node}#']
+  depend_action: ironic-compute#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=ironic-api, 'node=#{node}#']
+  depend_action: ironic-compute#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?openstack-controller/']
+  depend_action: ironic-compute#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=memcached]
+  depend_action: ironic-compute#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?rabbitmq/']
+  depend_action: ironic-compute#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=ironic-api]
+  depend_action: ironic-compute#{index}#.run

@@ -1,0 +1,28 @@
+name: composition_ceph-mon
+resources:
+- {id: ceph-mon, from: f2s/vr_ceph-mon, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-cinder, 'node=#{node}#']
+  depend_action: ceph-mon#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-controller, 'node=#{node}#']
+  depend_action: ceph-mon#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-controller, 'node=#{node}#']
+  depend_action: ceph-mon#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-ceph-mon]
+  depend_action: ceph-mon#{index}#.run

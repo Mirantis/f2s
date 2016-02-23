@@ -1,0 +1,10 @@
+name: composition_primary-dns-server
+resources:
+- {id: primary-dns-server, from: f2s/vr_primary-dns-server, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-haproxy, 'node=#{node}#']
+  depend_action: primary-dns-server#{index}#.run

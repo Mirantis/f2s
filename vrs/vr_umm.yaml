@@ -1,0 +1,10 @@
+name: composition_umm
+resources:
+- {id: umm, from: f2s/vr_umm, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=tools, 'node=#{node}#']
+  depend_action: umm#{index}#.run

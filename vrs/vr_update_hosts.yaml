@@ -1,0 +1,10 @@
+name: composition_update_hosts
+resources:
+- {id: update_hosts, from: f2s/vr_update_hosts, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=upload_nodes_info, 'node=#{node}#']
+  depend_action: update_hosts#{index}#.run

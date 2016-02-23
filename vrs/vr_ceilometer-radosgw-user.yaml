@@ -1,0 +1,16 @@
+name: composition_ceilometer-radosgw-user
+resources:
+- {id: ceilometer-radosgw-user, from: f2s/vr_ceilometer-radosgw-user, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=post_deployment_start, 'node=#{node}#']
+  depend_action: ceilometer-radosgw-user#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=enable_rados, 'node=#{node}#']
+  depend_action: ceilometer-radosgw-user#{index}#.run
