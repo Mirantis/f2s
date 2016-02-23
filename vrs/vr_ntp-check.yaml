@@ -1,0 +1,10 @@
+name: composition_ntp-check
+resources:
+- {id: ntp-check, from: f2s/vr_ntp-check, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=dns-client, 'node=#{node}#']
+  depend_action: ntp-check#{index}#.run

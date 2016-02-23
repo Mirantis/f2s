@@ -1,0 +1,10 @@
+name: composition_netconfig
+resources:
+- {id: netconfig, from: f2s/vr_netconfig, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=tools, 'node=#{node}#']
+  depend_action: netconfig#{index}#.run

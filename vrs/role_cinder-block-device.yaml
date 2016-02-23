@@ -1,0 +1,25 @@
+id: cinder-block-device
+resources:
+- from: f2s/vr_reserved_ports
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_hiera
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_fuel_pkgs
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_globals
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_logging
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_tools
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_netconfig
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_connectivity_tests
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_firewall
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_hosts
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_top-role-cinder
+  input: {index: '#{index}', node: '#{node}#'}
+tags: role=cinder-block-device

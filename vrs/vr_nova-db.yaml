@@ -1,0 +1,22 @@
+name: composition_nova-db
+resources:
+- {id: nova-db, from: f2s/vr_nova-db, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-database, 'node=#{node}#']
+  depend_action: nova-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=database, 'node=#{node}#']
+  depend_action: nova-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?database/']
+  depend_action: nova-db#{index}#.run

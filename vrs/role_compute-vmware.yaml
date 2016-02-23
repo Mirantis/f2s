@@ -1,0 +1,11 @@
+id: compute-vmware
+resources:
+- from: f2s/vr_ssl-keys-saving
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_ssl-add-trust-chain
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_ceilometer-compute
+  input: {index: '#{index}', node: '#{node}#'}
+- from: f2s/vr_top-role-compute-vmware
+  input: {index: '#{index}', node: '#{node}#'}
+tags: role=compute-vmware

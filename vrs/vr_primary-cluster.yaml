@@ -1,0 +1,22 @@
+name: composition_primary-cluster
+resources:
+- {id: primary-cluster, from: f2s/vr_primary-cluster, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=firewall, 'node=#{node}#']
+  depend_action: primary-cluster#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=hosts, 'node=#{node}#']
+  depend_action: primary-cluster#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=deploy_start, 'node=#{node}#']
+  depend_action: primary-cluster#{index}#.run

@@ -1,0 +1,22 @@
+name: composition_ceilometer-compute
+resources:
+- {id: ceilometer-compute, from: f2s/vr_ceilometer-compute, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=ceilometer-controller, 'node=#{node}#']
+  depend_action: ceilometer-compute#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=top-role-compute, 'node=#{node}#']
+  depend_action: ceilometer-compute#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=ceilometer-controller]
+  depend_action: ceilometer-compute#{index}#.run

@@ -1,0 +1,16 @@
+name: composition_ntp-server
+resources:
+- {id: ntp-server, from: f2s/vr_ntp-server, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=ntp-check, 'node=#{node}#']
+  depend_action: ntp-server#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=dns-client, 'node=#{node}#']
+  depend_action: ntp-server#{index}#.run

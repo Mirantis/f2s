@@ -1,0 +1,22 @@
+name: composition_heat-db
+resources:
+- {id: heat-db, from: f2s/vr_heat-db, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-database, 'node=#{node}#']
+  depend_action: heat-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=database, 'node=#{node}#']
+  depend_action: heat-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?database/']
+  depend_action: heat-db#{index}#.run

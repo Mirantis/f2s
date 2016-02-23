@@ -1,0 +1,10 @@
+name: composition_vmware-vcenter
+resources:
+- {id: vmware-vcenter, from: f2s/vr_vmware-vcenter, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=controller_remaining_tasks, 'node=#{node}#']
+  depend_action: vmware-vcenter#{index}#.run

@@ -1,0 +1,46 @@
+name: composition_primary-heat
+resources:
+- {id: primary-heat, from: f2s/vr_primary-heat, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-controller, 'node=#{node}#']
+  depend_action: primary-heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=heat-db, 'node=#{node}#']
+  depend_action: primary-heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=heat-keystone, 'node=#{node}#']
+  depend_action: primary-heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-controller, 'node=#{node}#']
+  depend_action: primary-heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=memcached]
+  depend_action: primary-heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=heat-keystone]
+  depend_action: primary-heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=heat-db]
+  depend_action: primary-heat#{index}#.run

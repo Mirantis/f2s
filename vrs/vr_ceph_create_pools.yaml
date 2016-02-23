@@ -1,0 +1,10 @@
+name: composition_ceph_create_pools
+resources:
+- {id: ceph_create_pools, from: f2s/vr_ceph_create_pools, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=post_deployment_start, 'node=#{node}#']
+  depend_action: ceph_create_pools#{index}#.run

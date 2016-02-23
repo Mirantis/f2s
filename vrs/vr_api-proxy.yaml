@@ -1,0 +1,10 @@
+name: composition_api-proxy
+resources:
+- {id: api-proxy, from: f2s/vr_api-proxy, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=apache, 'node=#{node}#']
+  depend_action: api-proxy#{index}#.run

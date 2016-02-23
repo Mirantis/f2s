@@ -1,0 +1,29 @@
+name: composition_primary-openstack-network-agents-dhcp
+resources:
+- {id: primary-openstack-network-agents-dhcp, from: f2s/vr_primary-openstack-network-agents-dhcp,
+  location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-agents-l3, 'node=#{node}#']
+  depend_action: primary-openstack-network-agents-dhcp#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-server-nova, 'node=#{node}#']
+  depend_action: primary-openstack-network-agents-dhcp#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-common-config, 'node=#{node}#']
+  depend_action: primary-openstack-network-agents-dhcp#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?openstack-network-plugins-l2/']
+  depend_action: primary-openstack-network-agents-dhcp#{index}#.run

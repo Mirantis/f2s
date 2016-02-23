@@ -1,0 +1,22 @@
+name: composition_globals
+resources:
+- {id: globals, from: f2s/vr_globals, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=fuel_pkgs, 'node=#{node}#']
+  depend_action: globals#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=hiera, 'node=#{node}#']
+  depend_action: globals#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=reserved_ports, 'node=#{node}#']
+  depend_action: globals#{index}#.run

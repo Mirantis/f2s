@@ -1,0 +1,40 @@
+name: composition_openstack-network-agents-l3
+resources:
+- {id: openstack-network-agents-l3, from: f2s/vr_openstack-network-agents-l3, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-plugins-l2, 'node=#{node}#']
+  depend_action: openstack-network-agents-l3#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-networks, 'node=#{node}#']
+  depend_action: openstack-network-agents-l3#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-network-plugins-l2, 'node=#{node}#']
+  depend_action: openstack-network-agents-l3#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-routers, 'node=#{node}#']
+  depend_action: openstack-network-agents-l3#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-network-agents-l3]
+  depend_action: openstack-network-agents-l3#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?openstack-network-plugins-l2/']
+  depend_action: openstack-network-agents-l3#{index}#.run

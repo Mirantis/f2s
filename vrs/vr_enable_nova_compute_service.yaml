@@ -1,0 +1,10 @@
+name: composition_enable_nova_compute_service
+resources:
+- {id: enable_nova_compute_service, from: f2s/vr_enable_nova_compute_service, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=post_deployment_start, 'node=#{node}#']
+  depend_action: enable_nova_compute_service#{index}#.run

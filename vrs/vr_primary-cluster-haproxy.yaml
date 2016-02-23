@@ -1,0 +1,22 @@
+name: composition_primary-cluster-haproxy
+resources:
+- {id: primary-cluster-haproxy, from: f2s/vr_primary-cluster-haproxy, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=deploy_start, 'node=#{node}#']
+  depend_action: primary-cluster-haproxy#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-cluster, 'node=#{node}#']
+  depend_action: primary-cluster-haproxy#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=virtual_ips, 'node=#{node}#']
+  depend_action: primary-cluster-haproxy#{index}#.run

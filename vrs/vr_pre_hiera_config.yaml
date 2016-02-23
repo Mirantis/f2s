@@ -1,0 +1,16 @@
+name: composition_pre_hiera_config
+resources:
+- {id: pre_hiera_config, from: f2s/vr_pre_hiera_config, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=rsync_core_puppet, 'node=#{node}#']
+  depend_action: pre_hiera_config#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=pre_deployment_start, 'node=#{node}#']
+  depend_action: pre_hiera_config#{index}#.run

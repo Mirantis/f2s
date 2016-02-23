@@ -1,0 +1,34 @@
+name: composition_primary-swift
+resources:
+- {id: primary-swift, from: f2s/vr_primary-swift, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=swift-keystone, 'node=#{node}#']
+  depend_action: primary-swift#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-controller, 'node=#{node}#']
+  depend_action: primary-swift#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=memcached]
+  depend_action: primary-swift#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=swift-keystone]
+  depend_action: primary-swift#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?rabbitmq/']
+  depend_action: primary-swift#{index}#.run

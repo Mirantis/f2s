@@ -1,0 +1,22 @@
+name: composition_swift-keystone
+resources:
+- {id: swift-keystone, from: f2s/vr_swift-keystone, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=keystone, 'node=#{node}#']
+  depend_action: swift-keystone#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-keystone, 'node=#{node}#']
+  depend_action: swift-keystone#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=keystone]
+  depend_action: swift-keystone#{index}#.run

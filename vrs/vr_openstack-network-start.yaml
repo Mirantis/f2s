@@ -1,0 +1,58 @@
+name: composition_openstack-network-start
+resources:
+- {id: openstack-network-start, from: f2s/vr_openstack-network-start, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=neutron-keystone, 'node=#{node}#']
+  depend_action: openstack-network-start#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=top-role-compute, 'node=#{node}#']
+  depend_action: openstack-network-start#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=neutron-db, 'node=#{node}#']
+  depend_action: openstack-network-start#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-controller, 'node=#{node}#']
+  depend_action: openstack-network-start#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=netconfig, 'node=#{node}#']
+  depend_action: openstack-network-start#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-controller, 'node=#{node}#']
+  depend_action: openstack-network-start#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=neutron-keystone]
+  depend_action: openstack-network-start#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=neutron-db]
+  depend_action: openstack-network-start#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-haproxy]
+  depend_action: openstack-network-start#{index}#.run

@@ -1,0 +1,22 @@
+name: composition_glance-db
+resources:
+- {id: glance-db, from: f2s/vr_glance-db, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-database, 'node=#{node}#']
+  depend_action: glance-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=database, 'node=#{node}#']
+  depend_action: glance-db#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: ['resource=/(primary-)?database/']
+  depend_action: glance-db#{index}#.run

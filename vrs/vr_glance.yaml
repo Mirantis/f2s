@@ -1,0 +1,58 @@
+name: composition_glance
+resources:
+- {id: glance, from: f2s/vr_glance, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=glance-db, 'node=#{node}#']
+  depend_action: glance#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=database, 'node=#{node}#']
+  depend_action: glance#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=glance-keystone, 'node=#{node}#']
+  depend_action: glance#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-database, 'node=#{node}#']
+  depend_action: glance#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=rabbitmq, 'node=#{node}#']
+  depend_action: glance#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-rabbitmq, 'node=#{node}#']
+  depend_action: glance#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-haproxy, 'node=#{node}#']
+  depend_action: glance#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=glance-keystone]
+  depend_action: glance#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=glance-db]
+  depend_action: glance#{index}#.run

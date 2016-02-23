@@ -1,0 +1,16 @@
+name: composition_ssl-dns-setup
+resources:
+- {id: ssl-dns-setup, from: f2s/vr_ssl-dns-setup, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=firewall, 'node=#{node}#']
+  depend_action: ssl-dns-setup#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=ssl-add-trust-chain, 'node=#{node}#']
+  depend_action: ssl-dns-setup#{index}#.run

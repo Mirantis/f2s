@@ -1,0 +1,34 @@
+name: composition_heat
+resources:
+- {id: heat, from: f2s/vr_heat, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-controller, 'node=#{node}#']
+  depend_action: heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=heat-db, 'node=#{node}#']
+  depend_action: heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=heat-keystone, 'node=#{node}#']
+  depend_action: heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-controller, 'node=#{node}#']
+  depend_action: heat#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-heat]
+  depend_action: heat#{index}#.run

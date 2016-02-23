@@ -1,0 +1,10 @@
+name: composition_tools
+resources:
+- {id: tools, from: f2s/vr_tools, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=logging, 'node=#{node}#']
+  depend_action: tools#{index}#.run

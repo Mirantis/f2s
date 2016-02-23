@@ -1,0 +1,22 @@
+name: composition_sahara-keystone
+resources:
+- {id: sahara-keystone, from: f2s/vr_sahara-keystone, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=keystone, 'node=#{node}#']
+  depend_action: sahara-keystone#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-keystone, 'node=#{node}#']
+  depend_action: sahara-keystone#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=keystone]
+  depend_action: sahara-keystone#{index}#.run

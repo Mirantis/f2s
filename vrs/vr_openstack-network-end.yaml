@@ -1,0 +1,100 @@
+name: composition_openstack-network-end
+resources:
+- {id: openstack-network-end, from: f2s/vr_openstack-network-end, location: '#{node}#'}
+events:
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-network-agents-metadata, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-common-config, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-server-config, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=neutron-db, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-networks, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=neutron-keystone, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-routers, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-plugins-l2, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-server-nova, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-network-agents-dhcp, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-network-plugins-l2, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-agents-l3, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=primary-openstack-network-agents-l3, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-agents-dhcp, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-agents-metadata, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
+- type: depends_on
+  state: success
+  parent:
+    action: run
+    with_tags: [resource=openstack-network-compute-nova, 'node=#{node}#']
+  depend_action: openstack-network-end#{index}#.run
