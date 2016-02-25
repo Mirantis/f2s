@@ -1,0 +1,5 @@
+click>=6.2
+networkx>=1.10
+python-fuelclient>=9.0.0
+solar>=2.0.1
+PyYAML>=3.1.0
