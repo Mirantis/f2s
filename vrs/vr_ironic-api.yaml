@@ -1,6 +1,6 @@
 name: composition_ironic-api
 resources:
-- {id: ironic-api, from: f2s/vr_ironic-api, location: '#{node}#'}
+- {id: ironic-api, from: f2s/ironic-api, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

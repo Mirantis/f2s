@@ -1,6 +1,6 @@
 name: composition_ceph-mon
 resources:
-- {id: ceph-mon, from: f2s/vr_ceph-mon, location: '#{node}#'}
+- {id: ceph-mon, from: f2s/ceph-mon, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

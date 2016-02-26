@@ -1,6 +1,6 @@
 name: composition_firewall
 resources:
-- {id: firewall, from: f2s/vr_firewall, location: '#{node}#'}
+- {id: firewall, from: f2s/firewall, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

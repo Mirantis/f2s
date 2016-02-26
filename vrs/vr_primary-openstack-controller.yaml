@@ -1,6 +1,6 @@
 name: composition_primary-openstack-controller
 resources:
-- {id: primary-openstack-controller, from: f2s/vr_primary-openstack-controller, location: '#{node}#'}
+- {id: primary-openstack-controller, from: f2s/primary-openstack-controller, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

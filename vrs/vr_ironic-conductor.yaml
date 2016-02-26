@@ -1,6 +1,6 @@
 name: composition_ironic-conductor
 resources:
-- {id: ironic-conductor, from: f2s/vr_ironic-conductor, location: '#{node}#'}
+- {id: ironic-conductor, from: f2s/ironic-conductor, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

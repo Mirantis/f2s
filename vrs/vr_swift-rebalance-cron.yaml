@@ -1,6 +1,6 @@
 name: composition_swift-rebalance-cron
 resources:
-- {id: swift-rebalance-cron, from: f2s/vr_swift-rebalance-cron, location: '#{node}#'}
+- {id: swift-rebalance-cron, from: f2s/swift-rebalance-cron, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

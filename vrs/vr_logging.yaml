@@ -1,6 +1,6 @@
 name: composition_logging
 resources:
-- {id: logging, from: f2s/vr_logging, location: '#{node}#'}
+- {id: logging, from: f2s/logging, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-ceilometer
 resources:
-- {id: openstack-haproxy-ceilometer, from: f2s/vr_openstack-haproxy-ceilometer, location: '#{node}#'}
+- {id: openstack-haproxy-ceilometer, from: f2s/openstack-haproxy-ceilometer, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

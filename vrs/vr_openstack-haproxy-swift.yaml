@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-swift
 resources:
-- {id: openstack-haproxy-swift, from: f2s/vr_openstack-haproxy-swift, location: '#{node}#'}
+- {id: openstack-haproxy-swift, from: f2s/openstack-haproxy-swift, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

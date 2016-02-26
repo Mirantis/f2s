@@ -1,6 +1,6 @@
 name: composition_primary-database
 resources:
-- {id: primary-database, from: f2s/vr_primary-database, location: '#{node}#'}
+- {id: primary-database, from: f2s/primary-database, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

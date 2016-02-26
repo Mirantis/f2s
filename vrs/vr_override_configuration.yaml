@@ -1,6 +1,6 @@
 name: composition_override_configuration
 resources:
-- {id: override_configuration, from: f2s/vr_override_configuration, location: '#{node}#'}
+- {id: override_configuration, from: f2s/override_configuration, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

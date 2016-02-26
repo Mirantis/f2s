@@ -1,6 +1,6 @@
 name: composition_enable_cinder_volume_service
 resources:
-- {id: enable_cinder_volume_service, from: f2s/vr_enable_cinder_volume_service, location: '#{node}#'}
+- {id: enable_cinder_volume_service, from: f2s/enable_cinder_volume_service, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

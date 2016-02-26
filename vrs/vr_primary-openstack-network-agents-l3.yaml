@@ -1,6 +1,6 @@
 name: composition_primary-openstack-network-agents-l3
 resources:
-- {id: primary-openstack-network-agents-l3, from: f2s/vr_primary-openstack-network-agents-l3,
+- {id: primary-openstack-network-agents-l3, from: f2s/primary-openstack-network-agents-l3,
   location: '#{node}#'}
 events:
 - type: depends_on

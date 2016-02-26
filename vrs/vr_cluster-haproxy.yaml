@@ -1,6 +1,6 @@
 name: composition_cluster-haproxy
 resources:
-- {id: cluster-haproxy, from: f2s/vr_cluster-haproxy, location: '#{node}#'}
+- {id: cluster-haproxy, from: f2s/cluster-haproxy, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

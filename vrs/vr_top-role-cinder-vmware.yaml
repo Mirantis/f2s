@@ -1,6 +1,6 @@
 name: composition_top-role-cinder-vmware
 resources:
-- {id: top-role-cinder-vmware, from: f2s/vr_top-role-cinder-vmware, location: '#{node}#'}
+- {id: top-role-cinder-vmware, from: f2s/top-role-cinder-vmware, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

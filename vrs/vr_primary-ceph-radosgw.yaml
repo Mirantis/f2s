@@ -1,6 +1,6 @@
 name: composition_primary-ceph-radosgw
 resources:
-- {id: primary-ceph-radosgw, from: f2s/vr_primary-ceph-radosgw, location: '#{node}#'}
+- {id: primary-ceph-radosgw, from: f2s/primary-ceph-radosgw, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

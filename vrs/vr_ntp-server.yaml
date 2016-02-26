@@ -1,6 +1,6 @@
 name: composition_ntp-server
 resources:
-- {id: ntp-server, from: f2s/vr_ntp-server, location: '#{node}#'}
+- {id: ntp-server, from: f2s/ntp-server, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

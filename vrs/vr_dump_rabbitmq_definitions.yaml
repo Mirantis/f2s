@@ -1,6 +1,6 @@
 name: composition_dump_rabbitmq_definitions
 resources:
-- {id: dump_rabbitmq_definitions, from: f2s/vr_dump_rabbitmq_definitions, location: '#{node}#'}
+- {id: dump_rabbitmq_definitions, from: f2s/dump_rabbitmq_definitions, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

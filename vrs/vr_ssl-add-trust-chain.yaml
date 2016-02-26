@@ -1,6 +1,6 @@
 name: composition_ssl-add-trust-chain
 resources:
-- {id: ssl-add-trust-chain, from: f2s/vr_ssl-add-trust-chain, location: '#{node}#'}
+- {id: ssl-add-trust-chain, from: f2s/ssl-add-trust-chain, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_globals
 resources:
-- {id: globals, from: f2s/vr_globals, location: '#{node}#'}
+- {id: globals, from: f2s/globals, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-stats
 resources:
-- {id: openstack-haproxy-stats, from: f2s/vr_openstack-haproxy-stats, location: '#{node}#'}
+- {id: openstack-haproxy-stats, from: f2s/openstack-haproxy-stats, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

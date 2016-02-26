@@ -1,6 +1,6 @@
 name: composition_reserved_ports
 resources:
-- {id: reserved_ports, from: f2s/vr_reserved_ports, location: '#{node}#'}
+- {id: reserved_ports, from: f2s/reserved_ports, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

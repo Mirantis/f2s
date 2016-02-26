@@ -1,6 +1,6 @@
 name: composition_conntrackd
 resources:
-- {id: conntrackd, from: f2s/vr_conntrackd, location: '#{node}#'}
+- {id: conntrackd, from: f2s/conntrackd, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

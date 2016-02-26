@@ -1,6 +1,6 @@
 name: composition_glance-db
 resources:
-- {id: glance-db, from: f2s/vr_glance-db, location: '#{node}#'}
+- {id: glance-db, from: f2s/glance-db, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

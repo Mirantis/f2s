@@ -1,6 +1,6 @@
 name: composition_memcached
 resources:
-- {id: memcached, from: f2s/vr_memcached, location: '#{node}#'}
+- {id: memcached, from: f2s/memcached, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

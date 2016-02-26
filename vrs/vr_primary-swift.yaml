@@ -1,6 +1,6 @@
 name: composition_primary-swift
 resources:
-- {id: primary-swift, from: f2s/vr_primary-swift, location: '#{node}#'}
+- {id: primary-swift, from: f2s/primary-swift, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

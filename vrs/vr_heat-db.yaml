@@ -1,6 +1,6 @@
 name: composition_heat-db
 resources:
-- {id: heat-db, from: f2s/vr_heat-db, location: '#{node}#'}
+- {id: heat-db, from: f2s/heat-db, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

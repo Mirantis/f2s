@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-ironic
 resources:
-- {id: openstack-haproxy-ironic, from: f2s/vr_openstack-haproxy-ironic, location: '#{node}#'}
+- {id: openstack-haproxy-ironic, from: f2s/openstack-haproxy-ironic, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

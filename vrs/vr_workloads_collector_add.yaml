@@ -1,6 +1,6 @@
 name: composition_workloads_collector_add
 resources:
-- {id: workloads_collector_add, from: f2s/vr_workloads_collector_add, location: '#{node}#'}
+- {id: workloads_collector_add, from: f2s/workloads_collector_add, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

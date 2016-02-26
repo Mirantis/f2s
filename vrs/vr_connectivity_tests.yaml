@@ -1,6 +1,6 @@
 name: composition_connectivity_tests
 resources:
-- {id: connectivity_tests, from: f2s/vr_connectivity_tests, location: '#{node}#'}
+- {id: connectivity_tests, from: f2s/connectivity_tests, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

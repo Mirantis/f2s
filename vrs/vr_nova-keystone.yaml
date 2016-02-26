@@ -1,6 +1,6 @@
 name: composition_nova-keystone
 resources:
-- {id: nova-keystone, from: f2s/vr_nova-keystone, location: '#{node}#'}
+- {id: nova-keystone, from: f2s/nova-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

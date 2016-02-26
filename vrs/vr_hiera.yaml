@@ -1,6 +1,6 @@
 name: composition_hiera
 resources:
-- {id: hiera, from: f2s/vr_hiera, location: '#{node}#'}
+- {id: hiera, from: f2s/hiera, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

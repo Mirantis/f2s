@@ -1,6 +1,6 @@
 name: composition_configure_default_route
 resources:
-- {id: configure_default_route, from: f2s/vr_configure_default_route, location: '#{node}#'}
+- {id: configure_default_route, from: f2s/configure_default_route, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-sahara
 resources:
-- {id: openstack-haproxy-sahara, from: f2s/vr_openstack-haproxy-sahara, location: '#{node}#'}
+- {id: openstack-haproxy-sahara, from: f2s/openstack-haproxy-sahara, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

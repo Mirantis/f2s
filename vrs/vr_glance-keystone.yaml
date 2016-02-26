@@ -1,6 +1,6 @@
 name: composition_glance-keystone
 resources:
-- {id: glance-keystone, from: f2s/vr_glance-keystone, location: '#{node}#'}
+- {id: glance-keystone, from: f2s/glance-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

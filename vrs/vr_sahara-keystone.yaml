@@ -1,6 +1,6 @@
 name: composition_sahara-keystone
 resources:
-- {id: sahara-keystone, from: f2s/vr_sahara-keystone, location: '#{node}#'}
+- {id: sahara-keystone, from: f2s/sahara-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

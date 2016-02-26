@@ -1,6 +1,6 @@
 name: composition_top-role-primary-mongo
 resources:
-- {id: top-role-primary-mongo, from: f2s/vr_top-role-primary-mongo, location: '#{node}#'}
+- {id: top-role-primary-mongo, from: f2s/top-role-primary-mongo, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

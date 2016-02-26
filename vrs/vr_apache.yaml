@@ -1,6 +1,6 @@
 name: composition_apache
 resources:
-- {id: apache, from: f2s/vr_apache, location: '#{node}#'}
+- {id: apache, from: f2s/apache, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

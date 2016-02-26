@@ -1,6 +1,6 @@
 name: composition_rabbitmq
 resources:
-- {id: rabbitmq, from: f2s/vr_rabbitmq, location: '#{node}#'}
+- {id: rabbitmq, from: f2s/rabbitmq, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_ceph-radosgw
 resources:
-- {id: ceph-radosgw, from: f2s/vr_ceph-radosgw, location: '#{node}#'}
+- {id: ceph-radosgw, from: f2s/ceph-radosgw, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_dns-client
 resources:
-- {id: dns-client, from: f2s/vr_dns-client, location: '#{node}#'}
+- {id: dns-client, from: f2s/dns-client, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

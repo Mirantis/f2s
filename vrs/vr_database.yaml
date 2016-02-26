@@ -1,6 +1,6 @@
 name: composition_database
 resources:
-- {id: database, from: f2s/vr_database, location: '#{node}#'}
+- {id: database, from: f2s/database, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

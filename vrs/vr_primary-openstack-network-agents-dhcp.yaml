@@ -1,6 +1,6 @@
 name: composition_primary-openstack-network-agents-dhcp
 resources:
-- {id: primary-openstack-network-agents-dhcp, from: f2s/vr_primary-openstack-network-agents-dhcp,
+- {id: primary-openstack-network-agents-dhcp, from: f2s/primary-openstack-network-agents-dhcp,
   location: '#{node}#'}
 events:
 - type: depends_on
