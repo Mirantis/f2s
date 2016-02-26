@@ -1,0 +1,16 @@
+id: fuel_data
+handler: shell
+version: 8.0.0
+actions:
+  run: run.sh
+  update: run.sh
+input:
+  uid:
+    type: str!
+    value:
+  env:
+    type: str!
+    value:
+  dst:
+    type: str!
+    value: /etc/astute.yaml
