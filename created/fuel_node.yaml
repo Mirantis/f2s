@@ -1,0 +1,31 @@
+resources:
+  - id: ssh_transport_node_#{index}#
+    from: resources/transport_ssh
+    input:
+      user: 'root'
+      key: '/root/.ssh/bootstrap.rsa'
+  - id: rsync_node_#{index}#
+    from: resources/transport_rsync
+    input:
+      user: 'root'
+      key: '/root/.ssh/bootstrap.rsa'
+  - id: transports_node_#{index}#
+    from: resources/transports
+    input:
+      transports:
+        - key: ssh_transport_node_#{index}#::key
+          user: ssh_transport_node_#{index}#::user
+          port: ssh_transport_node_#{index}#::port
+          name: ssh_transport_node_#{index}#::name
+          password: ssh_transport_node_#{index}#::password
+        - key: rsync_node_#{index}#::key
+          name: rsync_node_#{index}#::name
+          user: rsync_node_#{index}#::user
+          port: rsync_node_#{index}#::port
+          password: rsync_node_#{index}#::password
+  - id: node#{index}#     
+    from: resources/ro_node
+    input:
+      name: '#{index}#'
+      ip: '#{ip}#'
+      transports_id: transports_node_#{index}#::transports_id

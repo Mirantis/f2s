@@ -52,17 +52,17 @@ else:
 @click.argument('uids', nargs=-1)
 def nodes(uids):
     for uid, ip, env in source.nodes(uids):
-        cr.create('fuel_node', 'vrs/fuel_node',
-            {'index': uid, 'ip': ip})
+        cr.create('fuel_node', 'f2s/fuel_node',
+            {'index': int(uid), 'ip': ip})
 
 @main.command()
 @click.argument('env')
 def master(env):
     master = source.master()
-    cr.create('master', 'vrs/fuel_node',
+    cr.create('master', 'f2s/fuel_node',
         {'index': master[0], 'ip': master[1]})
 
-    cr.create('genkeys', 'vrs/genkeys', {
+    cr.create('genkeys', 'f2s/genkeys', {
         'node': 'node'+master[0],
         'index': int(env)})
 
@@ -70,7 +70,7 @@ def master(env):
 @click.argument('uids', nargs=-1)
 def prep(uids):
     for uid, ip, env in source.nodes(uids):
-        cr.create('prep', 'vrs/prep',
+        cr.create('prep', 'f2s/prep',
             {'index': uid, 'env': env, 'node': 'node'+str(uid)})
 
 
@@ -80,7 +80,7 @@ def roles(uids):
 
     for uid, ip, env in source.nodes(uids):
         for role in source.roles(uid):
-            cr.create(role, 'vrs/'+role,
+            cr.create(role, 'f2s/'+role,
                 {'index': uid, 'env': env, 'node': 'node'+str(uid)})
 
 

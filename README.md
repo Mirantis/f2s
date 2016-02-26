@@ -1,20 +1,43 @@
 #How to install on fuel master?
 
-First add repository for zeromq:
+If solar package is not available yet install solar from pip:
+
 ```
-cat << EOF > /etc/yum.repos.d/zmq.repo
-[home_fengshuo_zeromq]
-name=The latest stable of zeromq builds (CentOS_CentOS-6)
-type=rpm-md
-baseurl=http://download.opensuse.org/repositories/home:/fengshuo:/zeromq/CentOS_CentOS-6/
-gpgcheck=1
-gpgkey=http://download.opensuse.org/repositories/home:/fengshuo:/zeromq/CentOS_CentOS-6/repodata/repomd.xml.key
-enabled=1
-EOF
-```
-Then install solar:
-```
+yum install gcc-c++
+pip install virtualenv
+virtualenv venv
+source venv/bin/activate
+
 pip install solar
+```
+
+# configure solar:
+All of this things will be automated by solar eventually
+
+```
+mkdir /etc/solar
+echo solar_db: sqlite:////tmp/solar.db > /etc/solar/solar.conf 
+
+# create solar Resource defintions repository
+mkdir -p /var/lib/solar/repositories
+solar repo import f2s/vrs -n f2s
+solar repo update f2s f2s/resources
+solar repo update f2s f2s/created
+
+# clone solar-resources and create repositories
+git clone https://github.com/openstack/solar-resources.git
+solar repo import solar-resources/resources
+```
+
+# configure fuel node
+
+```
+# provision a node by fuel
+fuel node --node 1 --provision
+
+# run on each remote
+mkdir /var/lib/astute
+mkdir /etc/puppet/hieradata
 ```
 
 #f2s.py
@@ -61,17 +84,9 @@ Data will be fetched on solar command
 
 `solar res prefetch -n <resource name>`
 
-#tweaks
+# TODO
 
-Several things needs to be manually adjusted before you can use solar
-on fuel master.
-
-- provision a node by fuel
-  `fuel node --node 1 --provision`
-- create /var/lib/astute directory on remote
-- install repos using fuel
-  `fuel node --node 1 --tasks core_repos`
-- configure hiera on remote, and create /etc/puppet/hieradata directory
+Configure hiera, without it changes in resource will not be seen. It's ok for now.
 ```
  :backends:
   - yaml
@@ -85,7 +100,6 @@ on fuel master.
   - resource
 ```
 
-All of this things will be automated by solar eventually
 
 #basic troubleshooting
 
