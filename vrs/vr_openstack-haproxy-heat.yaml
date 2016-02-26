@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-heat
 resources:
-- {id: openstack-haproxy-heat, from: f2s/vr_openstack-haproxy-heat, location: '#{node}#'}
+- {id: openstack-haproxy-heat, from: f2s/openstack-haproxy-heat, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

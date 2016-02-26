@@ -1,6 +1,6 @@
 name: composition_primary-cluster-haproxy
 resources:
-- {id: primary-cluster-haproxy, from: f2s/vr_primary-cluster-haproxy, location: '#{node}#'}
+- {id: primary-cluster-haproxy, from: f2s/primary-cluster-haproxy, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

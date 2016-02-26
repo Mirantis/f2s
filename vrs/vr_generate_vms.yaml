@@ -1,6 +1,6 @@
 name: composition_generate_vms
 resources:
-- {id: generate_vms, from: f2s/vr_generate_vms, location: '#{node}#'}
+- {id: generate_vms, from: f2s/generate_vms, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

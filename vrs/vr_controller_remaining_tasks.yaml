@@ -1,6 +1,6 @@
 name: composition_controller_remaining_tasks
 resources:
-- {id: controller_remaining_tasks, from: f2s/vr_controller_remaining_tasks, location: '#{node}#'}
+- {id: controller_remaining_tasks, from: f2s/controller_remaining_tasks, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

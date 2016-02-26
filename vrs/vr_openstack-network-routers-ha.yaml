@@ -1,6 +1,6 @@
 name: composition_openstack-network-routers-ha
 resources:
-- {id: openstack-network-routers-ha, from: f2s/vr_openstack-network-routers-ha, location: '#{node}#'}
+- {id: openstack-network-routers-ha, from: f2s/openstack-network-routers-ha, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

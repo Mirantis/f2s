@@ -1,6 +1,6 @@
 name: composition_ntp-check
 resources:
-- {id: ntp-check, from: f2s/vr_ntp-check, location: '#{node}#'}
+- {id: ntp-check, from: f2s/ntp-check, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

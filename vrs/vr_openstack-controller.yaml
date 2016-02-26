@@ -1,6 +1,6 @@
 name: composition_openstack-controller
 resources:
-- {id: openstack-controller, from: f2s/vr_openstack-controller, location: '#{node}#'}
+- {id: openstack-controller, from: f2s/openstack-controller, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

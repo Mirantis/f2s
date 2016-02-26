@@ -114,6 +114,10 @@ class Task(object):
     def meta_path(self):
         return os.path.join(self.dst_path, 'meta.yaml')
 
+    @property
+    def relative_path(self):
+        return 'f2s/' + self.name
+
     def meta(self):
         if self.data['type'] == 'skipped':
             data = OrderedDict([('id', self.name),
@@ -186,7 +190,7 @@ class SingleTaskComposition(object):
     def resource(self):
         return OrderedDict(
                 [('id', self.task.name),
-                 ('from', self.relative_path),
+                 ('from', self.task.relative_path),
                  ('location', "#{node}#")])
 
     def event(self, tags, child):

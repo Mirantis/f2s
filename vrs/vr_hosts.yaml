@@ -1,6 +1,6 @@
 name: composition_hosts
 resources:
-- {id: hosts, from: f2s/vr_hosts, location: '#{node}#'}
+- {id: hosts, from: f2s/hosts, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

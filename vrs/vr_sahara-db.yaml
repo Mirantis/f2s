@@ -1,6 +1,6 @@
 name: composition_sahara-db
 resources:
-- {id: sahara-db, from: f2s/vr_sahara-db, location: '#{node}#'}
+- {id: sahara-db, from: f2s/sahara-db, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

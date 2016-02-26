@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-cinder
 resources:
-- {id: openstack-haproxy-cinder, from: f2s/vr_openstack-haproxy-cinder, location: '#{node}#'}
+- {id: openstack-haproxy-cinder, from: f2s/openstack-haproxy-cinder, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-keystone
 resources:
-- {id: openstack-haproxy-keystone, from: f2s/vr_openstack-haproxy-keystone, location: '#{node}#'}
+- {id: openstack-haproxy-keystone, from: f2s/openstack-haproxy-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

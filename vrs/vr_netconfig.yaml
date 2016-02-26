@@ -1,6 +1,6 @@
 name: composition_netconfig
 resources:
-- {id: netconfig, from: f2s/vr_netconfig, location: '#{node}#'}
+- {id: netconfig, from: f2s/netconfig, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

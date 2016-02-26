@@ -1,6 +1,6 @@
 name: composition_ironic-keystone
 resources:
-- {id: ironic-keystone, from: f2s/vr_ironic-keystone, location: '#{node}#'}
+- {id: ironic-keystone, from: f2s/ironic-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

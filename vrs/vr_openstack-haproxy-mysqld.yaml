@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-mysqld
 resources:
-- {id: openstack-haproxy-mysqld, from: f2s/vr_openstack-haproxy-mysqld, location: '#{node}#'}
+- {id: openstack-haproxy-mysqld, from: f2s/openstack-haproxy-mysqld, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

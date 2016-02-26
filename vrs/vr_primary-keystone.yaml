@@ -1,6 +1,6 @@
 name: composition_primary-keystone
 resources:
-- {id: primary-keystone, from: f2s/vr_primary-keystone, location: '#{node}#'}
+- {id: primary-keystone, from: f2s/primary-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

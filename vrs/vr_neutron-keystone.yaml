@@ -1,6 +1,6 @@
 name: composition_neutron-keystone
 resources:
-- {id: neutron-keystone, from: f2s/vr_neutron-keystone, location: '#{node}#'}
+- {id: neutron-keystone, from: f2s/neutron-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

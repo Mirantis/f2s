@@ -1,6 +1,6 @@
 name: composition_top-role-ceph-osd
 resources:
-- {id: top-role-ceph-osd, from: f2s/vr_top-role-ceph-osd, location: '#{node}#'}
+- {id: top-role-ceph-osd, from: f2s/top-role-ceph-osd, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

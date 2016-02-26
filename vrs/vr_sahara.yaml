@@ -1,6 +1,6 @@
 name: composition_sahara
 resources:
-- {id: sahara, from: f2s/vr_sahara, location: '#{node}#'}
+- {id: sahara, from: f2s/sahara, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

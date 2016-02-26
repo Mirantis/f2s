@@ -1,6 +1,6 @@
 name: composition_setup_repositories
 resources:
-- {id: setup_repositories, from: f2s/vr_setup_repositories, location: '#{node}#'}
+- {id: setup_repositories, from: f2s/setup_repositories, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

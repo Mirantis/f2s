@@ -1,6 +1,6 @@
 name: composition_neutron-db
 resources:
-- {id: neutron-db, from: f2s/vr_neutron-db, location: '#{node}#'}
+- {id: neutron-db, from: f2s/neutron-db, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

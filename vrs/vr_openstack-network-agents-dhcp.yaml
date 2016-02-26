@@ -1,7 +1,6 @@
 name: composition_openstack-network-agents-dhcp
 resources:
-- {id: openstack-network-agents-dhcp, from: f2s/vr_openstack-network-agents-dhcp,
-  location: '#{node}#'}
+- {id: openstack-network-agents-dhcp, from: f2s/openstack-network-agents-dhcp, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

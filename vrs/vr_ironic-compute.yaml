@@ -1,6 +1,6 @@
 name: composition_ironic-compute
 resources:
-- {id: ironic-compute, from: f2s/vr_ironic-compute, location: '#{node}#'}
+- {id: ironic-compute, from: f2s/ironic-compute, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

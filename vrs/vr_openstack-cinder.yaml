@@ -1,6 +1,6 @@
 name: composition_openstack-cinder
 resources:
-- {id: openstack-cinder, from: f2s/vr_openstack-cinder, location: '#{node}#'}
+- {id: openstack-cinder, from: f2s/openstack-cinder, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

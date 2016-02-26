@@ -1,6 +1,6 @@
 name: composition_cluster-vrouter
 resources:
-- {id: cluster-vrouter, from: f2s/vr_cluster-vrouter, location: '#{node}#'}
+- {id: cluster-vrouter, from: f2s/cluster-vrouter, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

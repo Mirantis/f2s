@@ -1,6 +1,6 @@
 name: composition_heat
 resources:
-- {id: heat, from: f2s/vr_heat, location: '#{node}#'}
+- {id: heat, from: f2s/heat, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

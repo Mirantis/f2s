@@ -1,6 +1,6 @@
 name: composition_primary-openstack-network-agents-metadata
 resources:
-- {id: primary-openstack-network-agents-metadata, from: f2s/vr_primary-openstack-network-agents-metadata,
+- {id: primary-openstack-network-agents-metadata, from: f2s/primary-openstack-network-agents-metadata,
   location: '#{node}#'}
 events:
 - type: depends_on

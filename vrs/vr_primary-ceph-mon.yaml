@@ -1,6 +1,6 @@
 name: composition_primary-ceph-mon
 resources:
-- {id: primary-ceph-mon, from: f2s/vr_primary-ceph-mon, location: '#{node}#'}
+- {id: primary-ceph-mon, from: f2s/primary-ceph-mon, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

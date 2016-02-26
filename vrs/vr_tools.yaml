@@ -1,6 +1,6 @@
 name: composition_tools
 resources:
-- {id: tools, from: f2s/vr_tools, location: '#{node}#'}
+- {id: tools, from: f2s/tools, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

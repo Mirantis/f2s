@@ -1,6 +1,6 @@
 name: composition_horizon
 resources:
-- {id: horizon, from: f2s/vr_horizon, location: '#{node}#'}
+- {id: horizon, from: f2s/horizon, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

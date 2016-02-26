@@ -1,6 +1,6 @@
 name: composition_ceilometer-keystone
 resources:
-- {id: ceilometer-keystone, from: f2s/vr_ceilometer-keystone, location: '#{node}#'}
+- {id: ceilometer-keystone, from: f2s/ceilometer-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

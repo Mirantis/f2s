@@ -1,6 +1,6 @@
 name: composition_create-cinder-types
 resources:
-- {id: create-cinder-types, from: f2s/vr_create-cinder-types, location: '#{node}#'}
+- {id: create-cinder-types, from: f2s/create-cinder-types, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

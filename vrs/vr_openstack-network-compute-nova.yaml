@@ -1,7 +1,6 @@
 name: composition_openstack-network-compute-nova
 resources:
-- {id: openstack-network-compute-nova, from: f2s/vr_openstack-network-compute-nova,
-  location: '#{node}#'}
+- {id: openstack-network-compute-nova, from: f2s/openstack-network-compute-nova, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

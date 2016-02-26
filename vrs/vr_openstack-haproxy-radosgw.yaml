@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-radosgw
 resources:
-- {id: openstack-haproxy-radosgw, from: f2s/vr_openstack-haproxy-radosgw, location: '#{node}#'}
+- {id: openstack-haproxy-radosgw, from: f2s/openstack-haproxy-radosgw, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

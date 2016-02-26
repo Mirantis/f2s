@@ -1,6 +1,6 @@
 name: composition_ceilometer-controller
 resources:
-- {id: ceilometer-controller, from: f2s/vr_ceilometer-controller, location: '#{node}#'}
+- {id: ceilometer-controller, from: f2s/ceilometer-controller, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

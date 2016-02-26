@@ -1,6 +1,6 @@
 name: composition_openstack-network-agents-l3
 resources:
-- {id: openstack-network-agents-l3, from: f2s/vr_openstack-network-agents-l3, location: '#{node}#'}
+- {id: openstack-network-agents-l3, from: f2s/openstack-network-agents-l3, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

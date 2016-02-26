@@ -1,6 +1,6 @@
 name: composition_fuel_pkgs
 resources:
-- {id: fuel_pkgs, from: f2s/vr_fuel_pkgs, location: '#{node}#'}
+- {id: fuel_pkgs, from: f2s/fuel_pkgs, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

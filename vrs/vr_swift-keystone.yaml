@@ -1,6 +1,6 @@
 name: composition_swift-keystone
 resources:
-- {id: swift-keystone, from: f2s/vr_swift-keystone, location: '#{node}#'}
+- {id: swift-keystone, from: f2s/swift-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

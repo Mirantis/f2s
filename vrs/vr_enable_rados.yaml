@@ -1,6 +1,6 @@
 name: composition_enable_rados
 resources:
-- {id: enable_rados, from: f2s/vr_enable_rados, location: '#{node}#'}
+- {id: enable_rados, from: f2s/enable_rados, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

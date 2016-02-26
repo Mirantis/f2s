@@ -1,6 +1,6 @@
 name: composition_primary-heat
 resources:
-- {id: primary-heat, from: f2s/vr_primary-heat, location: '#{node}#'}
+- {id: primary-heat, from: f2s/primary-heat, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_ssl-dns-setup
 resources:
-- {id: ssl-dns-setup, from: f2s/vr_ssl-dns-setup, location: '#{node}#'}
+- {id: ssl-dns-setup, from: f2s/ssl-dns-setup, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_keystone-db
 resources:
-- {id: keystone-db, from: f2s/vr_keystone-db, location: '#{node}#'}
+- {id: keystone-db, from: f2s/keystone-db, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

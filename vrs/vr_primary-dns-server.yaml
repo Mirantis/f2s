@@ -1,6 +1,6 @@
 name: composition_primary-dns-server
 resources:
-- {id: primary-dns-server, from: f2s/vr_primary-dns-server, location: '#{node}#'}
+- {id: primary-dns-server, from: f2s/primary-dns-server, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

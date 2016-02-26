@@ -1,6 +1,6 @@
 name: composition_primary-cluster
 resources:
-- {id: primary-cluster, from: f2s/vr_primary-cluster, location: '#{node}#'}
+- {id: primary-cluster, from: f2s/primary-cluster, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

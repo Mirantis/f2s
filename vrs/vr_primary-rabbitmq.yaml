@@ -1,6 +1,6 @@
 name: composition_primary-rabbitmq
 resources:
-- {id: primary-rabbitmq, from: f2s/vr_primary-rabbitmq, location: '#{node}#'}
+- {id: primary-rabbitmq, from: f2s/primary-rabbitmq, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

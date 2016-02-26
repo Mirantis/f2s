@@ -1,6 +1,6 @@
 name: composition_cluster_health
 resources:
-- {id: cluster_health, from: f2s/vr_cluster_health, location: '#{node}#'}
+- {id: cluster_health, from: f2s/cluster_health, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

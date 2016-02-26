@@ -1,6 +1,6 @@
 name: composition_cinder-db
 resources:
-- {id: cinder-db, from: f2s/vr_cinder-db, location: '#{node}#'}
+- {id: cinder-db, from: f2s/cinder-db, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

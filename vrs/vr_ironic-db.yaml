@@ -1,6 +1,6 @@
 name: composition_ironic-db
 resources:
-- {id: ironic-db, from: f2s/vr_ironic-db, location: '#{node}#'}
+- {id: ironic-db, from: f2s/ironic-db, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

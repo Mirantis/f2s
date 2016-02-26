@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-glance
 resources:
-- {id: openstack-haproxy-glance, from: f2s/vr_openstack-haproxy-glance, location: '#{node}#'}
+- {id: openstack-haproxy-glance, from: f2s/openstack-haproxy-glance, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

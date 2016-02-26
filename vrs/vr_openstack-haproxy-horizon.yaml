@@ -1,6 +1,6 @@
 name: composition_openstack-haproxy-horizon
 resources:
-- {id: openstack-haproxy-horizon, from: f2s/vr_openstack-haproxy-horizon, location: '#{node}#'}
+- {id: openstack-haproxy-horizon, from: f2s/openstack-haproxy-horizon, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

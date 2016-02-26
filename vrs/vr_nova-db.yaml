@@ -1,6 +1,6 @@
 name: composition_nova-db
 resources:
-- {id: nova-db, from: f2s/vr_nova-db, location: '#{node}#'}
+- {id: nova-db, from: f2s/nova-db, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

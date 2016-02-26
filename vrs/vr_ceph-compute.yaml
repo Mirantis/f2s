@@ -1,6 +1,6 @@
 name: composition_ceph-compute
 resources:
-- {id: ceph-compute, from: f2s/vr_ceph-compute, location: '#{node}#'}
+- {id: ceph-compute, from: f2s/ceph-compute, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

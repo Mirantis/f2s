@@ -1,6 +1,6 @@
 name: composition_top-role-compute
 resources:
-- {id: top-role-compute, from: f2s/vr_top-role-compute, location: '#{node}#'}
+- {id: top-role-compute, from: f2s/top-role-compute, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_ceilometer-compute
 resources:
-- {id: ceilometer-compute, from: f2s/vr_ceilometer-compute, location: '#{node}#'}
+- {id: ceilometer-compute, from: f2s/ceilometer-compute, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_pre_hiera_config
 resources:
-- {id: pre_hiera_config, from: f2s/vr_pre_hiera_config, location: '#{node}#'}
+- {id: pre_hiera_config, from: f2s/pre_hiera_config, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

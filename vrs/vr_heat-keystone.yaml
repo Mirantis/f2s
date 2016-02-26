@@ -1,6 +1,6 @@
 name: composition_heat-keystone
 resources:
-- {id: heat-keystone, from: f2s/vr_heat-keystone, location: '#{node}#'}
+- {id: heat-keystone, from: f2s/heat-keystone, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_swift
 resources:
-- {id: swift, from: f2s/vr_swift, location: '#{node}#'}
+- {id: swift, from: f2s/swift, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

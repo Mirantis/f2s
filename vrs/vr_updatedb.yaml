@@ -1,6 +1,6 @@
 name: composition_updatedb
 resources:
-- {id: updatedb, from: f2s/vr_updatedb, location: '#{node}#'}
+- {id: updatedb, from: f2s/updatedb, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

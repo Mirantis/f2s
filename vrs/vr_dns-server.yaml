@@ -1,6 +1,6 @@
 name: composition_dns-server
 resources:
-- {id: dns-server, from: f2s/vr_dns-server, location: '#{node}#'}
+- {id: dns-server, from: f2s/dns-server, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

@@ -1,6 +1,6 @@
 name: composition_virtual_ips
 resources:
-- {id: virtual_ips, from: f2s/vr_virtual_ips, location: '#{node}#'}
+- {id: virtual_ips, from: f2s/virtual_ips, location: '#{node}#'}
 events:
 - type: depends_on
   state: success

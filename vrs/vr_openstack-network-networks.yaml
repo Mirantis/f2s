@@ -1,6 +1,6 @@
 name: composition_openstack-network-networks
 resources:
-- {id: openstack-network-networks, from: f2s/vr_openstack-network-networks, location: '#{node}#'}
+- {id: openstack-network-networks, from: f2s/openstack-network-networks, location: '#{node}#'}
 events:
 - type: depends_on
   state: success
