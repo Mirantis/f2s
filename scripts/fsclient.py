@@ -4,7 +4,10 @@ import os
 
 import click
 from solar.core.resource import composer as cr
+from solar.core import resource
 from solar.dblayer.model import ModelMeta
+
+from fuelclient.objects.environment import Environment
 
 
 
@@ -67,21 +70,41 @@ def master(env):
         'index': int(env)})
 
 @main.command()
+@click.argument('env_id', type=click.INT)
 @click.argument('uids', nargs=-1)
-def prep(uids):
-    for uid, ip, env in source.nodes(uids):
-        cr.create('prep', 'f2s/prep',
-            {'index': uid, 'env': env, 'node': 'node'+str(uid)})
+def prep(env_id, uids):
+    for uid in uids:
+        node = resource.load('node{}'.format(uid))
+        res = cr.create('fuel_data{}'.format(uid), 'f2s/fuel_data',
+                        {'uid': uid, 'env': env_id})
+        node = resource.load('node{}'.format(uid))
+        node.connect(res[0], {})
 
 
 @main.command()
 @click.argument('uids', nargs=-1)
 def roles(uids):
-
     for uid, ip, env in source.nodes(uids):
         for role in source.roles(uid):
-            cr.create(role, 'f2s/'+role,
+            cr.create(role, 'f2s/role_'+role,
                 {'index': uid, 'env': env, 'node': 'node'+str(uid)})
+
+
+@main.command()
+@click.argument('env_id', type=click.INT)
+@click.argument('uids', nargs=-1)
+def prefetch(env_id, uids):
+    env = Environment(env_id)
+    facts = env.get_default_facts('deployment', uids)
+    facts = {node['uid']: node for node in facts}
+    for uid in uids:
+        res = resource.load('fuel_data{}'.format(uid))
+        node_facts = facts[uid]
+        res_args = res.args
+        for key in node_facts.keys():
+            if key not in res_args:
+                res.input_add(key)
+        res.update(node_facts)
 
 
 if __name__ == '__main__':
