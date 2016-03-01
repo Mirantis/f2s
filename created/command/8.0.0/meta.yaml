@@ -1,0 +1,13 @@
+id: command
+handler: shell
+version: 8.0.0
+actions:
+  run: run.sh
+  update: run.sh
+input:
+  cmd:
+    type: str!
+    value:
+  timeout:
+    type: int
+    value:
