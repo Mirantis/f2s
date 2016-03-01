@@ -154,7 +154,7 @@ def prep(env_id, uids):
         evapi.add_dep(res.name, 'pre_deployment_start',
                       actions=('run', 'update'))
         node = resource.load('node{}'.format(uid))
-        node.connect(res[0], {})
+        node.connect(res, {})
 
 
 @main.command()
