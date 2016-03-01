@@ -96,19 +96,17 @@ def create(*args, **kwargs):
 @click.argument('env')
 @click.argument('node')
 def alloc(env, node):
-
     dg = nx.DiGraph()
     response = source.graph(env)
     graph = response['tasks_graph']
     directory = response['tasks_directory']
+    node_res = resource.load('node%s' % node) if node != 'null' else None
     for task in graph[node]:
         meta = directory[task['id']]
         if node == 'null':
             name = task['id']
-            node_res = None
         else:
             name = '{}_{}'.format(task['id'], node)
-            node_res = resource.load('node%s' % node)
         if task['type'] == 'skipped':
             res = create(name, 'f2s/noop')
         elif task['type'] == 'shell':
@@ -138,7 +136,10 @@ def alloc(env, node):
         if u == v:
             continue
         try:
-            evapi.add_dep(u, v, actions=('run', 'update'))
+            if node == 'null':
+                evapi.add_react(u, v, actions=('run', 'update'))
+            else:
+                evapi.add_dep(u, v, actions=('run', 'update'))
         except Exception as exc:
             print exc
 
@@ -151,8 +152,8 @@ def prep(env_id, uids):
         node = resource.load('node{}'.format(uid))
         res = resource.Resource('fuel_data{}'.format(uid), 'f2s/fuel_data',
                                 {'uid': uid, 'env': env_id})
-        evapi.add_dep(res.name, 'pre_deployment_start',
-                      actions=('run', 'update'))
+        evapi.add_react(res.name, 'pre_deployment_start',
+                        actions=('run', 'update'))
         node = resource.load('node{}'.format(uid))
         node.connect(res, {})
 
