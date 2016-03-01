@@ -13,13 +13,18 @@ if $use_neutron {
     'neutron.services.metering.metering_plugin.MeteringPlugin',
   ]
 
-  $rabbit_hash      = hiera_hash('rabbit_hash', { })
-  $ceilometer_hash  = hiera_hash('ceilometer', { })
-  $network_scheme   = hiera_hash('network_scheme')
+  $rabbit_hash      = hiera_hash('rabbit_hash', {})
+  $ceilometer_hash  = hiera_hash('ceilometer', {})
+  $network_scheme   = hiera_hash('network_scheme', {})
 
   $verbose      = pick($openstack_network_hash['verbose'], hiera('verbose', true))
   $debug        = pick($openstack_network_hash['debug'], hiera('debug', true))
-  $use_syslog   = hiera('use_syslog', true)
+  # TODO(aschultz): LP#1499620 - neutron in UCA liberty fails to start with
+  # syslog enabled.
+  $use_syslog = $::os_package_type ? {
+    'ubuntu' => false,
+    default  => hiera('use_syslog', true)
+  }
   $use_stderr   = hiera('use_stderr', false)
   $log_facility = hiera('syslog_log_facility_neutron', 'LOG_LOCAL4')
 
@@ -27,7 +32,6 @@ if $use_neutron {
   $bind_host = get_network_role_property('neutron/api', 'ipaddr')
 
   $base_mac       = $neutron_config['L2']['base_mac']
-  $use_ceilometer = $ceilometer_hash['enabled']
   $amqp_hosts     = split(hiera('amqp_hosts', ''), ',')
   $amqp_user      = $rabbit_hash['user']
   $amqp_password  = $rabbit_hash['password']
@@ -61,11 +65,14 @@ if $use_neutron {
 
   }
 
+  $default_log_levels  = hiera_hash('default_log_levels')
+
   class { 'neutron' :
     verbose                 => $verbose,
     debug                   => $debug,
     use_syslog              => $use_syslog,
     use_stderr              => $use_stderr,
+    lock_path               => '/var/lib/neutron/lock',
     log_facility            => $log_facility,
     bind_host               => $bind_host,
     base_mac                => $base_mac,
@@ -84,12 +91,21 @@ if $use_neutron {
     advertise_mtu           => true,
   }
 
+  if $default_log_levels {
+    neutron_config {
+      'DEFAULT/default_log_levels' :
+        value => join(sort(join_keys_to_values($default_log_levels, '=')), ',');
+    }
+  } else {
+    neutron_config { 'DEFAULT/default_log_levels' : ensure => absent; }
+  }
+
   if $use_syslog {
     neutron_config { 'DEFAULT/use_syslog_rfc_format': value => true; }
   }
 
-  if $use_ceilometer {
-    neutron_config { 'DEFAULT/notification_driver': value => 'messaging' }
+  neutron_config {
+    'DEFAULT/notification_driver': value => $ceilometer_hash['notification_driver'];
   }
 
 }

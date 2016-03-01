@@ -1,33 +1,43 @@
 notice('MODULAR: openstack-network/compute-nova.pp')
 
+$network_scheme = hiera_hash('network_scheme', {})
+prepare_network_config($network_scheme)
+
 $use_neutron = hiera('use_neutron', false)
 
 if $use_neutron {
-  include nova::params
-  $neutron_config = hiera_hash('neutron_config')
+  include ::nova::params
+  $neutron_config             = hiera_hash('neutron_config', {})
   $neutron_integration_bridge = 'br-int'
-  $nova_hash = hiera_hash('nova')
-  $libvirt_vif_driver = pick($nova_hash['libvirt_vif_driver'], 'nova.virt.libvirt.vif.LibvirtGenericVIFDriver')
+  $nova_hash                  = hiera_hash('nova', {})
+  $libvirt_vif_driver         = pick($nova_hash['libvirt_vif_driver'], 'nova.virt.libvirt.vif.LibvirtGenericVIFDriver')
 
-  $management_vip     = hiera('management_vip')
-  $service_endpoint   = hiera('service_endpoint', $management_vip)
-  $neutron_endpoint   = hiera('neutron_endpoint', $management_vip)
-  $admin_password     = try_get_value($neutron_config, 'keystone/admin_password')
-  $admin_tenant_name  = try_get_value($neutron_config, 'keystone/admin_tenant', 'services')
-  $admin_username     = try_get_value($neutron_config, 'keystone/admin_user', 'neutron')
-  $region_name        = hiera('region', 'RegionOne')
-  $auth_api_version   = 'v2.0'
-  $admin_identity_uri = "http://${service_endpoint}:35357"
-  $admin_auth_url     = "${admin_identity_uri}/${auth_api_version}"
-  $neutron_url        = "http://${neutron_endpoint}:9696"
+  $management_vip             = hiera('management_vip')
+  $service_endpoint           = hiera('service_endpoint', $management_vip)
+  $admin_password             = try_get_value($neutron_config, 'keystone/admin_password')
+  $admin_tenant_name          = try_get_value($neutron_config, 'keystone/admin_tenant', 'services')
+  $admin_username             = try_get_value($neutron_config, 'keystone/admin_user', 'neutron')
+  $region_name                = hiera('region', 'RegionOne')
+  $auth_api_version           = 'v3'
+  $ssl_hash                   = hiera_hash('use_ssl', {})
+
+  $admin_identity_protocol    = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'protocol', 'http')
+  $admin_identity_address     = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'hostname', [$service_endpoint, $management_vip])
+
+  $neutron_internal_protocol  = get_ssl_property($ssl_hash, {}, 'neutron', 'internal', 'protocol', 'http')
+  $neutron_endpoint           = get_ssl_property($ssl_hash, {}, 'neutron', 'internal', 'hostname', [hiera('neutron_endpoint', ''), $management_vip])
+
+  $admin_identity_uri         = "${admin_identity_protocol}://${admin_identity_address}:35357"
+  $admin_auth_url             = "${admin_identity_uri}/${auth_api_version}"
+  $neutron_url                = "${neutron_internal_protocol}://${neutron_endpoint}:9696"
+
+  $nova_migration_ip          =  get_network_role_property('nova/migration', 'ipaddr')
 
   service { 'libvirt' :
     ensure   => 'running',
     enable   => true,
-  # Workaround for bug LP #1469308
-  # also service name for Ubuntu and Centos is the same.
-    name     => 'libvirtd',
-    provider => $nova::params::special_service_provider,
+    name     => $::nova::params::libvirt_service_name,
+    provider => $::nova::params::special_service_provider,
   }
 
   exec { 'destroy_libvirt_default_network':
@@ -60,9 +70,9 @@ if $use_neutron {
   }
 
   nova_config {
-    'DEFAULT/linuxnet_interface_driver': value => 'nova.network.linux_net.LinuxOVSInterfaceDriver';
+    'DEFAULT/linuxnet_interface_driver':       value => 'nova.network.linux_net.LinuxOVSInterfaceDriver';
     'DEFAULT/linuxnet_ovs_integration_bridge': value => $neutron_integration_bridge;
-    'DEFAULT/network_device_mtu': value => '65000';
+    'DEFAULT/my_ip':                           value => $nova_migration_ip;
   }
 
   class { 'nova::network::neutron' :
@@ -91,35 +101,8 @@ if $use_neutron {
     before  => Service['libvirt'],
   }
 
-  # We need to restart nova-compute service in orderto apply new settings
-  # nova-compute must not be restarted until integration bridge is created by
-  # Neutron L2 agent.
-  # The reason is described here https://bugs.launchpad.net/fuel/+bug/1477475
-  exec { 'wait-for-int-br':
-    command   => "ovs-vsctl br-exists ${neutron_integration_bridge}",
-    path      => [ '/sbin', '/bin', '/usr/bin', '/usr/sbin' ],
-    try_sleep => 6,
-    tries     => 10,
-  }
-  Exec['wait-for-int-br'] -> Service['nova-compute']
-  service { 'nova-compute':
-    ensure => 'running',
-    name   => $::nova::params::compute_service_name,
-  }
-  Nova_config<| |> ~> Service['nova-compute']
-
-  if($::operatingsystem == 'Ubuntu') {
-    tweaks::ubuntu_service_override { 'nova-network':
-      package_name => 'nova-network',
-    }
-  }
-
 } else {
-
-  $network_scheme          = hiera('network_scheme', { })
-  prepare_network_config($network_scheme)
-
-  $nova_hash               = hiera_hash('nova_hash', { })
+  $nova_hash               = hiera_hash('nova', { })
   $bind_address            = get_network_role_property('nova/api', 'ipaddr')
   $public_int              = get_network_role_property('public/vip', 'interface')
   $private_interface       = get_network_role_property('nova/private', 'interface')
@@ -128,14 +111,13 @@ if $use_neutron {
   $nova_rate_limits        = hiera('nova_rate_limits')
   $network_size            = hiera('network_size', undef)
   $network_manager         = hiera('network_manager', undef)
-  $network_config          = hiera('network_config', { })
+  $network_config          = hiera('network_config', {})
   $create_networks         = true
   $num_networks            = hiera('num_networks', '1')
-  $novanetwork_params      = hiera('novanetwork_parameters')
   $fixed_range             = hiera('fixed_network_range')
   $use_vcenter             = hiera('use_vcenter', false)
   $enabled_apis            = 'metadata'
-  $dns_nameservers         = hiera_array('dns_nameservers', [])
+  $dns_nameservers         = hiera('dns_nameservers', [])
 
   if ! $fixed_range {
     fail('Must specify the fixed range when using nova-networks')
@@ -192,7 +174,6 @@ if $use_neutron {
     }
 
     nova_config {
-      'DEFAULT/multi_host'      : value => 'True';
       'DEFAULT/send_arp_for_ha' : value => 'True';
       'DEFAULT/metadata_host'   : value => $bind_address;
     }
@@ -254,6 +235,7 @@ if $use_neutron {
     dns2              => $dns_nameservers[1],
     enabled           => $enable_nova_net,
     install_service   => $enable_nova_net,
+    multi_host        => true,
   }
 #NOTE(aglarendil): lp/1381164
   nova_config { 'DEFAULT/force_snat_range': value => '0.0.0.0/0' }

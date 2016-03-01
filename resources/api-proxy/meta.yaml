@@ -4,16 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/api-proxy/api-proxy.pp
   update: /etc/puppet/modules/osnailyfacter/modular/api-proxy/api-proxy.pp
-input:
-  apache_ports:
-    value: null
-  fqdn:
-    value: null
-  master_ip:
-    value: null
-  max_header_size:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
+input: {}

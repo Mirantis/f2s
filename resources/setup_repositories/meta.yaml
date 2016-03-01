@@ -1,0 +1,7 @@
+id: setup_repositories
+handler: puppetv2
+version: '8.0'
+actions:
+  run: /etc/puppet/modules/osnailyfacter/modular/fuel_pkgs/setup_repositories.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/fuel_pkgs/setup_repositories.pp
+input: {}

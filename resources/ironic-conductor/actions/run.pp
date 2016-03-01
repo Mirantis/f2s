@@ -1,7 +1,8 @@
 notice('MODULAR: ironic/ironic-conductor.pp')
 
-$network_scheme             = hiera('network_scheme', {})
+$network_scheme = hiera_hash('network_scheme', {})
 prepare_network_config($network_scheme)
+
 $baremetal_address          = get_network_role_property('ironic/baremetal', 'ipaddr')
 $ironic_hash                = hiera_hash('ironic', {})
 $management_vip             = hiera('management_vip')
@@ -20,37 +21,59 @@ $verbose                    = hiera('verbose', true)
 $use_syslog                 = hiera('use_syslog', true)
 $syslog_log_facility_ironic = hiera('syslog_log_facility_ironic', 'LOG_USER')
 $rabbit_hash                = hiera_hash('rabbit_hash')
-$rabbit_ha_queues           = hiera('rabbit_ha_queues')
+$amqp_durable_queues        = pick($ironic_hash['amqp_durable_queues'], false)
+$storage_hash               = hiera('storage')
 
 $ironic_tenant              = pick($ironic_hash['tenant'],'services')
 $ironic_user                = pick($ironic_hash['auth_name'],'ironic')
 $ironic_user_password       = pick($ironic_hash['user_password'],'ironic')
 $ironic_swift_tempurl_key   = pick($ironic_hash['swift_tempurl_key'],'ironic')
 
+$db_type                    = 'mysql'
 $db_host                    = pick($ironic_hash['db_host'], $database_vip)
 $db_user                    = pick($ironic_hash['db_user'], 'ironic')
 $db_name                    = pick($ironic_hash['db_name'], 'ironic')
 $db_password                = pick($ironic_hash['db_password'], 'ironic')
-$database_connection        = "mysql://${db_name}:${db_password}@${db_host}/${db_name}?charset=utf8&read_timeout=60"
+# LP#1526938 - python-mysqldb supports this, python-pymysql does not
+if $::os_package_type == 'debian' {
+  $extra_params = { 'charset' => 'utf8', 'read_timeout' => 60 }
+} else {
+  $extra_params = { 'charset' => 'utf8' }
+}
+$db_connection = os_database_connection({
+  'dialect'  => $db_type,
+  'host'     => $db_host,
+  'database' => $db_name,
+  'username' => $db_user,
+  'password' => $db_password,
+  'extra'    => $extra_params
+})
 
 $tftp_root                  = '/var/lib/ironic/tftpboot'
+
+$temp_url_endpoint_type = $storage_hash['images_ceph'] ? {
+  true    => 'radosgw',
+  default => 'swift'
+}
 
 package { 'ironic-fa-deploy':
   ensure => 'present',
 }
 
 class { '::ironic':
-  verbose             => $verbose,
-  debug               => $debug,
-  enabled_drivers     => ['fuel_ssh', 'fuel_ipmitool', 'fake'],
-  rabbit_hosts        => $rabbit_hosts,
-  rabbit_userid       => $rabbit_hash['user'],
-  rabbit_password     => $rabbit_hash['password'],
-  amqp_durable_queues => $rabbit_ha_queues,
-  use_syslog          => $use_syslog,
-  log_facility        => $syslog_log_facility_ironic,
-  database_connection => $database_connection,
-  glance_api_servers  => $glance_api_servers,
+  verbose              => $verbose,
+  debug                => $debug,
+  enabled_drivers      => ['fuel_ssh', 'fuel_ipmitool', 'fake', 'fuel_libvirt'],
+  rabbit_hosts         => $rabbit_hosts,
+  rabbit_userid        => $rabbit_hash['user'],
+  rabbit_password      => $rabbit_hash['password'],
+  amqp_durable_queues  => $amqp_durable_queues,
+  control_exchange     => 'ironic',
+  use_syslog           => $use_syslog,
+  log_facility         => $syslog_log_facility_ironic,
+  database_connection  => $db_connection,
+  database_max_retries => '-1',
+  glance_api_servers   => $glance_api_servers,
 }
 
 class { '::ironic::client': }
@@ -72,6 +95,7 @@ ironic_config {
   'keystone_authtoken/admin_password':    value => $ironic_user_password, secret => true;
   'glance/swift_temp_url_key':            value => $ironic_swift_tempurl_key;
   'glance/swift_endpoint_url':            value => "http://${baremetal_vip}:8080";
+  'glance/temp_url_endpoint_type':        value => $temp_url_endpoint_type;
   'conductor/api_url':                    value => "http://${baremetal_vip}:6385";
 }
 

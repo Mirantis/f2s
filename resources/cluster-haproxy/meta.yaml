@@ -4,24 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/cluster-haproxy/cluster-haproxy.pp
   update: /etc/puppet/modules/osnailyfacter/modular/cluster-haproxy/cluster-haproxy.pp
-input:
-  database_vip:
-    value: null
-  debug:
-    value: null
-  fqdn:
-    value: null
-  haproxy:
-    value: null
-  management_vip:
-    value: null
-  network_scheme:
-    value: null
-  primary_controller:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
-  service_endpoint:
-    value: null
+input: {}

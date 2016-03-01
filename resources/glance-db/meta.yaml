@@ -4,22 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/glance/db.pp
   update: /etc/puppet/modules/osnailyfacter/modular/glance/db.pp
-input:
-  database_vip:
-    value: null
-  fqdn:
-    value: null
-  glance:
-    value: null
-  management_vip:
-    value: null
-  mysql:
-    value: null
-  mysql_custom_setup_class:
-    value: null
-  node_name:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
+input: {}

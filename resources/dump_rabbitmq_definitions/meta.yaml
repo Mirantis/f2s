@@ -4,12 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/astute/dump_rabbitmq_definitions.pp
   update: /etc/puppet/modules/osnailyfacter/modular/astute/dump_rabbitmq_definitions.pp
-input:
-  fqdn:
-    value: null
-  puppet_modules:
-    value: null
-  rabbit_hash:
-    value: null
-  role:
-    value: null
+input: {}

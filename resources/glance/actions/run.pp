@@ -17,27 +17,46 @@ $syslog_log_facility   = hiera('syslog_log_facility_glance')
 $rabbit_hash           = hiera_hash('rabbit_hash', {})
 $max_pool_size         = hiera('max_pool_size')
 $max_overflow          = hiera('max_overflow')
-$ceilometer_hash       = hiera_hash('ceilometer', {})
+$ceilometer_hash       = hiera_hash('ceilometer_hash', {})
 $region                = hiera('region','RegionOne')
-$glance_endpoint       = $management_vip
-$service_workers       = pick($glance_hash['glance_workers'], min(max($::processorcount, 2), 16))
+$workers_max           = hiera('workers_max', 16)
+$service_workers       = pick($glance_hash['glance_workers'],
+                              min(max($::processorcount, 2), $workers_max))
+$ironic_hash           = hiera_hash('ironic', {})
+$primary_controller    = hiera('primary_controller')
 
-$db_type                        = 'mysql'
-$db_host                        = pick($glance_hash['db_host'], $database_vip)
+$default_log_levels             = hiera_hash('default_log_levels')
+
+$db_type      = 'mysql'
+$db_host      = pick($glance_hash['db_host'], $database_vip)
+$db_user      = pick($glance_hash['db_user'], 'glance')
+$db_password  = $glance_hash['db_password']
+$db_name      = pick($glance_hash['db_name'], 'glance')
+# LP#1526938 - python-mysqldb supports this, python-pymysql does not
+if $::os_package_type == 'debian' {
+  $extra_params = { 'charset' => 'utf8', 'read_timeout' => 60 }
+} else {
+  $extra_params = { 'charset' => 'utf8' }
+}
+$db_connection = os_database_connection({
+  'dialect'  => $db_type,
+  'host'     => $db_host,
+  'database' => $db_name,
+  'username' => $db_user,
+  'password' => $db_password,
+  'extra'    => $extra_params
+})
+
 $api_bind_address               = get_network_role_property('glance/api', 'ipaddr')
 $enabled                        = true
 $max_retries                    = '-1'
 $idle_timeout                   = '3600'
-$auth_uri                       = "http://${service_endpoint}:5000/"
 
 $rabbit_password                = $rabbit_hash['password']
 $rabbit_user                    = $rabbit_hash['user']
 $rabbit_hosts                   = split(hiera('amqp_hosts',''), ',')
 $rabbit_virtual_host            = '/'
 
-$glance_db_user                 = pick($glance_hash['db_user'], 'glance')
-$glance_db_dbname               = pick($glance_hash['db_name'], 'glance')
-$glance_db_password             = $glance_hash['db_password']
 $glance_user                    = pick($glance_hash['user'],'glance')
 $glance_user_password           = $glance_hash['user_password']
 $glance_tenant                  = pick($glance_hash['tenant'],'services')
@@ -52,9 +71,19 @@ $glance_image_cache_max_size    = $glance_hash['image_cache_max_size']
 $glance_pipeline                = pick($glance_hash['pipeline'], 'keystone')
 $glance_large_object_size       = pick($glance_hash['large_object_size'], '5120')
 
+$ssl_hash               = hiera_hash('use_ssl', {})
+$internal_auth_protocol = get_ssl_property($ssl_hash, {}, 'keystone', 'internal', 'protocol', 'http')
+$internal_auth_address  = get_ssl_property($ssl_hash, {}, 'keystone', 'internal', 'hostname', [hiera('service_endpoint', ''), $management_vip])
+$admin_auth_protocol    = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'protocol', 'http')
+$admin_auth_address     = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'hostname', [hiera('service_endpoint', ''), $management_vip])
+$glance_endpoint        = get_ssl_property($ssl_hash, {}, 'glance', 'internal', 'hostname', [$management_vip])
+
+$auth_uri     = "${internal_auth_protocol}://${internal_auth_address}:5000/"
+$identity_uri = "${admin_auth_protocol}://${admin_auth_address}:35357/"
+
 $rados_connect_timeout          = '30'
 
-if ($storage_hash['images_ceph']) {
+if ($storage_hash['images_ceph'] and !$ironic_hash['enabled']) {
   $glance_backend = 'ceph'
   $glance_known_stores = [ 'glance.store.rbd.Store', 'glance.store.http.Store' ]
   $glance_show_image_direct_url = pick($glance_hash['show_image_direct_url'], true)
@@ -74,11 +103,8 @@ if ($storage_hash['images_ceph']) {
 class { 'openstack::glance':
   verbose                        => $verbose,
   debug                          => $debug,
-  db_type                        => $db_type,
-  db_host                        => $db_host,
-  glance_db_user                 => $glance_db_user,
-  glance_db_dbname               => $glance_db_dbname,
-  glance_db_password             => $glance_db_password,
+  default_log_levels             => $default_log_levels,
+  db_connection                  => $db_connection,
   glance_user                    => $glance_user,
   glance_user_password           => $glance_user_password,
   glance_tenant                  => $glance_tenant,
@@ -90,9 +116,11 @@ class { 'openstack::glance':
   glance_vcenter_image_dir       => $glance_vcenter_image_dir,
   glance_vcenter_api_retry_count => $glance_vcenter_api_retry_count,
   auth_uri                       => $auth_uri,
-  keystone_host                  => $service_endpoint,
+  identity_uri                   => $identity_uri,
+  glance_protocol                => 'http',
   region                         => $region,
   bind_host                      => $api_bind_address,
+  primary_controller             => $primary_controller,
   enabled                        => $enabled,
   glance_backend                 => $glance_backend,
   registry_host                  => $glance_endpoint,
@@ -112,7 +140,7 @@ class { 'openstack::glance':
   rabbit_hosts                   => $rabbit_hosts,
   rabbit_virtual_host            => $rabbit_virtual_host,
   known_stores                   => $glance_known_stores,
-  ceilometer                     => $ceilometer_hash[enabled],
+  notification_driver            => $ceilometer_hash['notification_driver'],
   service_workers                => $service_workers,
   rados_connect_timeout          => $rados_connect_timeout,
 }

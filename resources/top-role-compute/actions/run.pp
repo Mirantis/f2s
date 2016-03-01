@@ -1,12 +1,24 @@
 notice('MODULAR: compute.pp')
 
 $network_scheme = hiera_hash('network_scheme', {})
+$override_configuration = hiera_hash('configuration', {})
 $network_metadata = hiera_hash('network_metadata', {})
 prepare_network_config($network_scheme)
 
+# override nova options
+override_resources { 'nova_config':
+  data => $override_configuration['nova_config']
+}
+
+# override nova-api options
+override_resources { 'nova_paste_api_ini':
+  data => $override_configuration['nova_paste_api_ini']
+}
+
+Override_resources <||> ~> Service <| tag == 'nova-service' |>
+
 # Pulling hiera
 $compute_hash                   = hiera_hash('compute', {})
-$node_name                      = hiera('node_name')
 $public_int                     = hiera('public_int', undef)
 $public_vip                     = hiera('public_vip')
 $management_vip                 = hiera('management_vip')
@@ -15,13 +27,11 @@ $service_endpoint               = hiera('service_endpoint')
 $primary_controller             = hiera('primary_controller')
 $use_neutron                    = hiera('use_neutron', false)
 $sahara_hash                    = hiera('sahara', {})
-$murano_hash                    = hiera('murano', {})
 $mp_hash                        = hiera('mp')
 $verbose                        = pick($compute_hash['verbose'], true)
 $debug                          = pick($compute_hash['debug'], hiera('debug', true))
 $use_monit                      = false
 $auto_assign_floating_ip        = hiera('auto_assign_floating_ip', false)
-$nodes_hash                     = hiera('nodes', {})
 $storage_hash                   = hiera_hash('storage_hash', {})
 $vcenter_hash                   = hiera('vcenter', {})
 $nova_hash                      = hiera_hash('nova_hash', {})
@@ -45,21 +55,27 @@ $syslog_log_facility_cinder     = hiera('syslog_log_facility_cinder', 'LOG_LOCAL
 $syslog_log_facility_neutron    = hiera('syslog_log_facility_neutron', 'LOG_LOCAL4')
 $syslog_log_facility_nova       = hiera('syslog_log_facility_nova','LOG_LOCAL6')
 $syslog_log_facility_keystone   = hiera('syslog_log_facility_keystone', 'LOG_LOCAL7')
-$syslog_log_facility_murano     = hiera('syslog_log_facility_murano', 'LOG_LOCAL0')
 $syslog_log_facility_sahara     = hiera('syslog_log_facility_sahara','LOG_LOCAL0')
 $nova_rate_limits               = hiera('nova_rate_limits')
 $nova_report_interval           = hiera('nova_report_interval')
 $nova_service_down_time         = hiera('nova_service_down_time')
-$glance_api_servers             = hiera('glance_api_servers', "${management_vip}:9292")
 $config_drive_format            = 'vfat'
-
 $public_ssl_hash                = hiera('public_ssl')
-$vncproxy_host = $public_ssl_hash['services'] ? {
-  true    => $public_ssl_hash['hostname'],
-  default => $public_vip,
+$ssl_hash                       = hiera_hash('use_ssl', {})
+
+$glance_protocol                = get_ssl_property($ssl_hash, {}, 'glance', 'internal', 'protocol', 'http')
+$glance_endpoint                = get_ssl_property($ssl_hash, {}, 'glance', 'internal', 'hostname', [hiera('glance_endpoint', $management_vip)])
+$glance_internal_ssl            = get_ssl_property($ssl_hash, {}, 'glance', 'internal', 'usage', false)
+if $glance_internal_ssl {
+  $glance_api_servers = "${glance_protocol}://${glance_endpoint}:9292"
+} else {
+  $glance_api_servers = hiera('glance_api_servers', "${management_vip}:9292")
 }
 
-$db_host                        = pick($nova_hash['db_host'], $database_vip)
+$vncproxy_protocol                      = get_ssl_property($ssl_hash, $public_ssl_hash, 'nova', 'public', 'protocol', [$nova_hash['vncproxy_protocol'], 'http'])
+$vncproxy_host                          = get_ssl_property($ssl_hash, $public_ssl_hash, 'nova', 'public', 'hostname', [$public_vip])
+
+$db_host                                = pick($nova_hash['db_host'], $database_vip)
 
 $block_device_allocate_retries          = hiera('block_device_allocate_retries', 300)
 $block_device_allocate_retries_interval = hiera('block_device_allocate_retries_interval', 3)
@@ -111,18 +127,12 @@ if $primary_controller {
   }
 }
 
-if !$rabbit_hash['user'] {
-  $rabbit_hash['user'] = 'nova'
-}
-
 $floating_hash = {}
 
 ##CALCULATED PARAMETERS
 
-##TODO: simply parse nodes array
-$memcache_nodes   = get_nodes_hash_by_roles(hiera('network_metadata'), hiera('memcache_roles'))
-$memcache_ipaddrs = ipsort(values(get_node_to_ipaddr_map_by_network_role($memcache_nodes,'mgmt/memcache')))
-$roles            = $network_metadata['nodes'][$node_name]['node_roles']
+$memcached_server = hiera('memcached_addresses')
+$memcached_port   = hiera('memcache_server_port', '11211')
 $mountpoints      = filter_hash($mp_hash,'point')
 
 # SQLAlchemy backend configuration
@@ -139,9 +149,9 @@ if ($storage_hash['volumes_lvm']) {
 
 # Determine who should get the volume service
 
-if (member($roles, 'cinder') and $storage_hash['volumes_lvm']) {
+if (roles_include(['cinder']) and $storage_hash['volumes_lvm']) {
   $manage_volumes = 'iscsi'
-} elsif (member($roles, 'cinder') and $storage_hash['volumes_vmdk']) {
+} elsif (roles_include(['cinder']) and $storage_hash['volumes_vmdk']) {
   $manage_volumes = 'vmdk'
 } elsif ($storage_hash['volumes_ceph']) {
   $manage_volumes = 'ceph'
@@ -169,9 +179,15 @@ if !($storage_hash['images_ceph'] and $storage_hash['objects_ceph']) and !$stora
   $use_swift = false
 }
 
+# Get reserved host memory straight value if we've ceph neighbor
+$r_hostmem = roles_include(['ceph-osd']) ? {
+  true  => min(max(floor($::memorysize_mb*0.2), 512), 1536),
+  false => undef,
+}
+
 # NOTE(bogdando) for controller nodes running Corosync with Pacemaker
 #   we delegate all of the monitor functions to RA instead of monit.
-if member($roles, 'controller') or member($roles, 'primary-controller') {
+if roles_include(['controller', 'primary-controller']) {
   $use_monit_real = false
 } else {
   $use_monit_real = $use_monit
@@ -180,9 +196,9 @@ if member($roles, 'controller') or member($roles, 'primary-controller') {
 if $use_monit_real {
   # Configure service names for monit watchdogs and 'service' system path
   # FIXME(bogdando) replace service_path to systemd, once supported
-  include nova::params
-  include cinder::params
-  include neutron::params
+  include ::nova::params
+  include ::cinder::params
+  include ::neutron::params
   $nova_compute_name   = $::nova::params::compute_service_name
   $nova_api_name       = $::nova::params::api_service_name
   $nova_network_name   = $::nova::params::network_service_name
@@ -211,38 +227,63 @@ if hiera('use_vcenter', false) {
 $mirror_type = 'external'
 Exec { logoutput => true }
 
-include osnailyfacter::test_compute
+include ::osnailyfacter::test_compute
 
 if ($::mellanox_mode == 'ethernet') {
   $neutron_private_net = pick($neutron_config['default_private_net'], 'net04')
   $physnet = $neutron_config['predefined_networks'][$neutron_private_net]['L2']['physnet']
-  class { 'mellanox_openstack::compute':
+  class { '::mellanox_openstack::compute':
     physnet => $physnet,
     physifc => $neutron_mellanox['physical_port'],
   }
 }
 
+$oc_public_interface = $public_int ? {
+  undef   => '',
+  default => $public_int
+}
+
+$oc_private_interface = $use_neutron ? {
+  true    => false,
+  default => hiera('private_int', undef)
+}
+
+$oc_fixed_range = $use_neutron ? {
+  true    => false,
+  default => hiera('fixed_network_range', undef)
+}
+
+$oc_neutron_user_password = $use_neutron ? {
+  true    => $neutron_config['keystone']['admin_password'],
+  default => undef
+}
+
+$oc_nova_hash = merge({ 'reserved_host_memory' => $r_hostmem }, $nova_hash)
+
 # NOTE(bogdando) deploy compute node with disabled nova-compute
 #   service #LP1398817. The orchestration will start and enable it back
 #   after the deployment is done.
 # FIXME(bogdando) This should be changed once the host aggregates implemented, bp disable-new-computes
-class { 'openstack::compute':
+class { '::openstack::compute':
   enabled                     => false,
-  public_interface            => $public_int ? { undef=>'', default=>$public_int},
-  private_interface           => $use_neutron ? { true=>false, default=>hiera('private_int', undef)},
+  public_interface            => $oc_public_interface,
+  private_interface           => $oc_private_interface,
   internal_address            => get_network_role_property('nova/api', 'ipaddr'),
   libvirt_type                => hiera('libvirt_type', undef),
-  fixed_range                 => $use_neutron ? { true=>false, default=>hiera('fixed_network_range', undef)},
+  # FIXME(bogdando) remove after fixed upstream https://review.openstack.org/131710
+  host_uuid                   => hiera('host_uuid', generate('/bin/sh', '-c', 'uuidgen')),
+  fixed_range                 => $oc_fixed_range,
   network_manager             => hiera('network_manager', undef),
   network_config              => hiera('network_config', {}),
   multi_host                  => $multi_host,
   queue_provider              => $queue_provider,
   amqp_hosts                  => hiera('amqp_hosts',''),
-  amqp_user                   => $rabbit_hash['user'],
+  amqp_user                   => pick($rabbit_hash['user'], 'nova'),
   amqp_password               => $rabbit_hash['password'],
   rabbit_ha_queues            => $rabbit_ha_queues,
   auto_assign_floating_ip     => $auto_assign_floating_ip,
   glance_api_servers          => $glance_api_servers,
+  vncproxy_protocol           => $vncproxy_protocol,
   vncproxy_host               => $vncproxy_host,
   vncserver_listen            => '0.0.0.0',
   migration_support           => true,
@@ -253,19 +294,20 @@ class { 'openstack::compute':
   vnc_enabled                 => true,
   manage_volumes              => $manage_volumes,
   nova_user_password          => $nova_hash[user_password],
-  nova_hash                   => $nova_hash,
-  cache_server_ip             => $memcache_ipaddrs,
+  nova_hash                   => $oc_nova_hash,
+  cache_server_ip             => $memcached_server,
+  cache_server_port           => $memcached_port,
   service_endpoint            => $service_endpoint,
   cinder                      => true,
   cinder_iscsi_bind_addr      => get_network_role_property('cinder/iscsi', 'ipaddr'),
   cinder_user_password        => $cinder_hash[user_password],
   cinder_db_password          => $cinder_hash[db_password],
-  ceilometer                  => $ceilometer_hash[enabled],
+  notification_driver         => $ceilometer_hash['notification_driver'],
   ceilometer_metering_secret  => $ceilometer_hash[metering_secret],
   ceilometer_user_password    => $ceilometer_hash[user_password],
   db_host                     => $db_host,
   network_provider            => $network_provider,
-  neutron_user_password       => $use_neutron ? { true=>$neutron_config['keystone']['admin_password'], default=>undef},
+  neutron_user_password       => $oc_neutron_user_password,
   base_mac                    => $base_mac,
 
   use_syslog                  => $use_syslog,
@@ -288,46 +330,46 @@ $nova_config_hash = {
   'DEFAULT/use_cow_images'                         => { value => hiera('use_cow_images', 'True') },
   'DEFAULT/block_device_allocate_retries'          => { value => $block_device_allocate_retries },
   'DEFAULT/block_device_allocate_retries_interval' => { value => $block_device_allocate_retries_interval },
-  'libvirt/libvirt_inject_key'                     => { value => 'true' },
-  'libvirt/libvirt_inject_password'                => { value => 'true' },
+  'libvirt/libvirt_inject_key'                     => { value => true },
+  'libvirt/libvirt_inject_password'                => { value => true },
 }
 
 $nova_complete_hash = merge($nova_config_hash, $nova_custom_hash)
 
-class {'nova::config':
+class {'::nova::config':
   nova_config => $nova_complete_hash,
 }
 
 # Configure monit watchdogs
 # FIXME(bogdando) replace service_path and action to systemd, once supported
 if $use_monit_real {
-  monit::process { $nova_compute_name :
+  monit::check::process { $nova_compute_name :
     ensure        => running,
     matching      => '/usr/bin/python /usr/bin/nova-compute',
-    start_command => "${service_path} ${nova_compute_name} restart",
-    stop_command  => "${service_path} ${nova_compute_name} stop",
+    program_start => "${service_path} ${nova_compute_name} restart",
+    program_stop  => "${service_path} ${nova_compute_name} stop",
     pidfile       => false,
   }
   if $use_neutron {
-    monit::process { $ovs_vswitchd_name :
+    monit::check::process { $ovs_vswitchd_name :
       ensure        => running,
-      start_command => "${service_path} ${ovs_vswitchd_name} restart",
-      stop_command  => "${service_path} ${ovs_vswitchd_name} stop",
+      program_start => "${service_path} ${ovs_vswitchd_name} restart",
+      program_stop  => "${service_path} ${ovs_vswitchd_name} stop",
       pidfile       => '/var/run/openvswitch/ovs-vswitchd.pid',
     }
   } else {
-    monit::process { $nova_network_name :
+    monit::check::process { $nova_network_name :
       ensure        => running,
       matching      => '/usr/bin/python /usr/bin/nova-network',
-      start_command => "${service_path} ${nova_network_name} restart",
-      stop_command  => "${service_path} ${nova_network_name} stop",
+      program_start => "${service_path} ${nova_network_name} restart",
+      program_stop  => "${service_path} ${nova_network_name} stop",
       pidfile       => false,
     }
-    monit::process { $nova_api_name :
+    monit::check::process { $nova_api_name :
       ensure        => running,
       matching      => '/usr/bin/python /usr/bin/nova-api',
-      start_command => "${service_path} ${nova_api_name} restart",
-      stop_command  => "${service_path} ${nova_api_name} stop",
+      program_start => "${service_path} ${nova_api_name} restart",
+      program_stop  => "${service_path} ${nova_api_name} stop",
       pidfile       => false,
     }
   }

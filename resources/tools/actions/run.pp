@@ -1,24 +1,14 @@
 notice('MODULAR: tools.pp')
 
-class { 'osnailyfacter::atop': }
+$custom_acct_file = hiera('custom_accounting_file', undef)
+class { 'osnailyfacter::atop':
+  custom_acct_file => $custom_acct_file,
+}
+
 class { 'osnailyfacter::ssh': }
 
 if $::virtual != 'physical' {
   class { 'osnailyfacter::acpid': }
-}
-
-case $::osfamily {
-  'RedHat': {
-    if $::operatingsystemmajrelease >= 7 {
-      $man_package = 'man-db'
-    } else {
-      $man_package = 'man'
-    }
-  }
-  'Debian': {
-    $man_package = 'man'
-  }
-  default: { fail("Unsupported osfamily: ${::osfamily}") }
 }
 
 $tools = [
@@ -27,12 +17,9 @@ $tools = [
   'htop',
   'tcpdump',
   'strace',
-  'fuel-misc'
+  'fuel-misc',
+  'man-db',
 ]
-
-package { $man_package:
-  ensure => 'present',
-}
 
 package { $tools :
   ensure => 'present',

@@ -4,22 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/openstack-network/keystone.pp
   update: /etc/puppet/modules/osnailyfacter/modular/openstack-network/keystone.pp
-input:
-  fqdn:
-    value: null
-  management_vip:
-    value: null
-  public_ssl:
-    value: null
-  public_vip:
-    value: null
-  puppet_modules:
-    value: null
-  quantum_settings:
-    value: null
-  region:
-    value: null
-  role:
-    value: null
-  use_neutron:
-    value: null
+input: {}

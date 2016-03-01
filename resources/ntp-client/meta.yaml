@@ -4,18 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/ntp/ntp-client.pp
   update: /etc/puppet/modules/osnailyfacter/modular/ntp/ntp-client.pp
-input:
-  fqdn:
-    value: null
-  management_vrouter_vip:
-    value: null
-  nodes:
-    value: null
-  ntp_servers:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
-  uid:
-    value: null
+input: {}

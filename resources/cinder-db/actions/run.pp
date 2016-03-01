@@ -1,7 +1,7 @@
 notice('MODULAR: cinder/db.pp')
 
 $cinder_hash    = hiera_hash('cinder', {})
-$mysql_hash     = hiera_hash('mysql_hash', {})
+$mysql_hash     = hiera_hash('mysql', {})
 $management_vip = hiera('management_vip', undef)
 $database_vip   = hiera('database_vip', undef)
 
@@ -24,7 +24,7 @@ validate_string($mysql_root_user)
 
 if $db_create {
 
-  class { 'galera::client':
+  class { '::openstack::galera::client':
     custom_setup_class => hiera('mysql_custom_setup_class', 'galera'),
   }
 
@@ -41,7 +41,7 @@ if $db_create {
     db_password => $db_root_password,
   }
 
-  Class['galera::client'] ->
+  Class['::openstack::galera::client'] ->
     Class['osnailyfacter::mysql_access'] ->
       Class['cinder::db::mysql']
 

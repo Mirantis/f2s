@@ -4,24 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/openstack-haproxy/openstack-haproxy-nova.pp
   update: /etc/puppet/modules/osnailyfacter/modular/openstack-haproxy/openstack-haproxy-nova.pp
-input:
-  fqdn:
-    value: null
-  management_vip:
-    value: null
-  nova:
-    value: null
-  nova_api_nodes:
-    value: null
-  nova_ipaddresses:
-    value: null
-  nova_names:
-    value: null
-  public_ssl:
-    value: null
-  public_vip:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
+input: {}
