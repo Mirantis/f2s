@@ -116,6 +116,9 @@ def alloc(env, node):
         elif task['type'] == 'sync':
             create(name, 'resources/sources',
                    {'sources': [meta['parameters']]})
+        elif task['type'] == 'copy_files':
+            create(name, 'resources/sources',
+                   {'sources': meta['parameters']['files']})
         elif task['type'] == 'puppet':
             create(name, 'f2s/' + task['id'])
         else:
