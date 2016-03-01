@@ -4,32 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/openstack-haproxy/openstack-haproxy-mysqld.pp
   update: /etc/puppet/modules/osnailyfacter/modular/openstack-haproxy/openstack-haproxy-mysqld.pp
-input:
-  custom_mysql_setup_class:
-    value: null
-  database_nodes:
-    value: null
-  database_vip:
-    value: null
-  fqdn:
-    value: null
-  management_vip:
-    value: null
-  mysql:
-    value: null
-  mysqld_ipaddresses:
-    value: null
-  mysqld_names:
-    value: null
-  network_metadata:
-    value: null
-  primary_controller:
-    value: null
-  public_ssl:
-    value: null
-  public_vip:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
+input: {}

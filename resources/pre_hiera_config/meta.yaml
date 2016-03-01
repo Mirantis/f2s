@@ -4,8 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/hiera/hiera.pp
   update: /etc/puppet/modules/osnailyfacter/modular/hiera/hiera.pp
-input:
-  fqdn:
-    value: null
-  puppet_modules:
-    value: null
+input: {}

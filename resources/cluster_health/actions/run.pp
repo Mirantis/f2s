@@ -1,11 +1,11 @@
 notice('MODULAR: cluster/health.pp')
 
-if !(hiera('role') in hiera('corosync_roles')) {
-    fail('The node role is not in corosync roles')
+if ! roles_include(hiera('corosync_roles')) {
+  fail('The node role is not in corosync roles')
 }
 
 # load the mounted filesystems from our custom fact, remove boot
-$mount_points = delete(split($::mounts, ','), '/boot')
+$mount_points = delete(split($::mounts, ','), ['/boot', '/var/lib/horizon'])
 
 $disks              = hiera('corosync_disks', $mount_points)
 $min_disk_free      = hiera('corosync_min_disk_space', '512M')

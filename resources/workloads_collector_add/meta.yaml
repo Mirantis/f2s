@@ -4,14 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/keystone/workloads_collector_add.pp
   update: /etc/puppet/modules/osnailyfacter/modular/keystone/workloads_collector_add.pp
-input:
-  fqdn:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
-  service_endpoint:
-    value: null
-  workloads_collector:
-    value: null
+input: {}

@@ -4,24 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/vmware/vcenter.pp
   update: /etc/puppet/modules/osnailyfacter/modular/vmware/vcenter.pp
-input:
-  ceilometer:
-    value: null
-  debug:
-    value: null
-  fqdn:
-    value: null
-  novanetwork_parameters:
-    value: null
-  public_vip:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
-  use_neutron:
-    value: null
-  use_vcenter:
-    value: null
-  vcenter_hash:
-    value: null
+input: {}

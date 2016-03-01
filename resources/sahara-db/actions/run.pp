@@ -3,7 +3,7 @@ notice('MODULAR: sahara/db.pp')
 $node_name      = hiera('node_name')
 $sahara_hash    = hiera_hash('sahara_hash', {})
 $sahara_enabled = pick($sahara_hash['enabled'], false)
-$mysql_hash     = hiera_hash('mysql_hash', {})
+$mysql_hash     = hiera_hash('mysql', {})
 $management_vip = hiera('management_vip', undef)
 $database_vip   = hiera('database_vip', undef)
 
@@ -26,7 +26,7 @@ validate_string($mysql_root_user)
 
 if $sahara_enabled and $db_create {
 
-  class { 'galera::client':
+  class { '::openstack::galera::client':
     custom_setup_class => hiera('mysql_custom_setup_class', 'galera'),
   }
 
@@ -43,7 +43,7 @@ if $sahara_enabled and $db_create {
     db_password => $db_root_password,
   }
 
-  Class['galera::client'] ->
+  Class['::openstack::galera::client'] ->
     Class['osnailyfacter::mysql_access'] ->
       Class['sahara::db::mysql']
 

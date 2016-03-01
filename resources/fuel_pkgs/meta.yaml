@@ -4,10 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/fuel_pkgs/fuel_pkgs.pp
   update: /etc/puppet/modules/osnailyfacter/modular/fuel_pkgs/fuel_pkgs.pp
-input:
-  fqdn:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
+input: {}

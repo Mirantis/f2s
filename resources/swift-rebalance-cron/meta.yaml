@@ -4,20 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/swift/rebalance_cronjob.pp
   update: /etc/puppet/modules/osnailyfacter/modular/swift/rebalance_cronjob.pp
-input:
-  fqdn:
-    value: null
-  is_primary_swift_proxy:
-    value: null
-  network_metadata:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
-  storage_hash:
-    value: null
-  swift_master_role:
-    value: null
-  swift_ring_min_part_hours:
-    value: null
+input: {}

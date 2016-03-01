@@ -2,12 +2,6 @@ id: ironic-compute
 handler: puppetv2
 version: '8.0'
 actions:
-  run: /etc/puppet/modules/osnailyfacter/modular/roles/ironic-compute.pp
-  update: /etc/puppet/modules/osnailyfacter/modular/roles/ironic-compute.pp
-input:
-  fqdn:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
+  run: /etc/puppet/modules/osnailyfacter/modular/ironic/ironic-compute.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/ironic/ironic-compute.pp
+input: {}

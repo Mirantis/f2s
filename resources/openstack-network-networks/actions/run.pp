@@ -36,7 +36,8 @@ if hiera('use_neutron', false) {
   $floating_net_shared          = try_get_value($nets, "${floating_net}/shared", false)
 
   if !empty($floating_net_floating_range) {
-    $floating_net_allocation_pool = format_allocation_pools($floating_net_floating_range)
+    $floating_cidr = try_get_value($nets, "${floating_net}/L3/subnet")
+    $floating_net_allocation_pool = format_allocation_pools($floating_net_floating_range, $floating_cidr)
   }
 
   $tenant_name         = try_get_value($access_hash, 'tenant', 'admin')
@@ -97,13 +98,14 @@ if hiera('use_neutron', false) {
     }
 
     neutron_subnet { 'baremetal__subnet' :
-      ensure          => 'present',
-      cidr            => try_get_value($nets, 'baremetal/L3/subnet'),
-      network_name    => 'baremetal',
-      tenant_name     => $tenant_name,
-      gateway_ip      => try_get_value($nets, 'baremetal/L3/gateway'),
-      enable_dhcp     => true,
-      dns_nameservers => try_get_value($nets, 'baremetal/L3/nameservers'),
+      ensure           => 'present',
+      cidr             => try_get_value($nets, 'baremetal/L3/subnet'),
+      network_name     => 'baremetal',
+      tenant_name      => $tenant_name,
+      gateway_ip       => try_get_value($nets, 'baremetal/L3/gateway'),
+      enable_dhcp      => true,
+      dns_nameservers  => try_get_value($nets, 'baremetal/L3/nameservers'),
+      allocation_pools => format_allocation_pools(try_get_value($nets, 'baremetal/L3/floating')),
     }
   }
 

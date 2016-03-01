@@ -1,0 +1,7 @@
+id: override_configuration
+handler: puppetv2
+version: '8.0'
+actions:
+  run: /etc/puppet/modules/osnailyfacter/modular/hiera/override_configuration.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/hiera/override_configuration.pp
+input: {}

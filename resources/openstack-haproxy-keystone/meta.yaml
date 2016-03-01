@@ -4,28 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/openstack-haproxy/openstack-haproxy-keystone.pp
   update: /etc/puppet/modules/osnailyfacter/modular/openstack-haproxy/openstack-haproxy-keystone.pp
-input:
-  fqdn:
-    value: null
-  keystone:
-    value: null
-  keystone_ipaddresses:
-    value: null
-  keystone_names:
-    value: null
-  management_vip:
-    value: null
-  network_metadata:
-    value: null
-  public_service_endpoint:
-    value: null
-  public_ssl:
-    value: null
-  public_vip:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
-  service_endpoint:
-    value: null
+input: {}

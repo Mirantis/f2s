@@ -1,8 +1,8 @@
 notice('MODULAR: mongo.pp')
 
-prepare_network_config(hiera('network_scheme', {}))
+prepare_network_config(hiera_hash('network_scheme', {}))
 $mongo_hash        = hiera_hash('mongo', {})
-$mongo_nodes       = get_nodes_hash_by_roles(hiera('network_metadata'), hiera('mongo_roles'))
+$mongo_nodes       = get_nodes_hash_by_roles(hiera_hash('network_metadata'), hiera('mongo_roles'))
 $mongo_address_map = get_node_to_ipaddr_map_by_network_role($mongo_nodes, 'mongo/db')
 $bind_address      = get_network_role_property('mongo/db', 'ipaddr')
 $use_syslog        = hiera('use_syslog', true)
@@ -25,7 +25,7 @@ class { 'openstack::mongo':
   debug                      => $debug,
 }
 
-if !(member($roles, 'controller') or member($roles, 'primary-controller')) {
+if ! roles_include(['controller', 'primary-controller']) {
   sysctl::value { 'net.ipv4.tcp_keepalive_time':
     value => '300',
   }

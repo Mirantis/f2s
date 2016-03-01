@@ -1,0 +1,7 @@
+id: create-cinder-types
+handler: puppetv2
+version: '8.0'
+actions:
+  run: /etc/puppet/modules/osnailyfacter/modular/openstack-cinder/create_cinder_types.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/openstack-cinder/create_cinder_types.pp
+input: {}

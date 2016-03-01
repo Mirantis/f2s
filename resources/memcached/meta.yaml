@@ -4,12 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/memcached/memcached.pp
   update: /etc/puppet/modules/osnailyfacter/modular/memcached/memcached.pp
-input:
-  fqdn:
-    value: null
-  network_scheme:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
+input: {}

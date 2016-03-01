@@ -1,0 +1,7 @@
+id: primary-keystone
+handler: puppetv2
+version: '8.0'
+actions:
+  run: /etc/puppet/modules/osnailyfacter/modular/keystone/keystone.pp
+  update: /etc/puppet/modules/osnailyfacter/modular/keystone/keystone.pp
+input: {}

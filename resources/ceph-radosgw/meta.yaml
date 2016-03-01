@@ -4,26 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/ceph/radosgw.pp
   update: /etc/puppet/modules/osnailyfacter/modular/ceph/radosgw.pp
-input:
-  ceph_monitor_nodes:
-    value: null
-  fqdn:
-    value: null
-  keystone:
-    value: null
-  management_vip:
-    value: null
-  public_ssl:
-    value: null
-  public_vip:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
-  service_endpoint:
-    value: null
-  storage:
-    value: null
-  use_neutron:
-    value: null
+input: {}

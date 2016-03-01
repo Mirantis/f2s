@@ -4,14 +4,4 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/ceilometer/radosgw_user.pp
   update: /etc/puppet/modules/osnailyfacter/modular/ceilometer/radosgw_user.pp
-input:
-  ceilometer:
-    value: null
-  fqdn:
-    value: null
-  puppet_modules:
-    value: null
-  role:
-    value: null
-  storage:
-    value: null
+input: {}

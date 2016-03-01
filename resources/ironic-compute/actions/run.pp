@@ -26,25 +26,49 @@ $nova_service_down_time         = hiera('nova_service_down_time')
 $neutron_config                 = hiera_hash('quantum_settings')
 
 $ironic_tenant                  = pick($ironic_hash['tenant'],'services')
-$ironic_user                    = pick($ironic_hash['auth_name'],'ironic')
+$ironic_username                = pick($ironic_hash['auth_name'],'ironic')
 $ironic_user_password           = pick($ironic_hash['user_password'],'ironic')
 
+$db_type                        = 'mysql'
 $db_host                        = pick($nova_hash['db_host'], $database_vip)
 $db_user                        = pick($nova_hash['db_user'], 'nova')
 $db_name                        = pick($nova_hash['db_name'], 'nova')
 $db_password                    = pick($nova_hash['db_password'], 'nova')
-$database_connection            = "mysql://${db_name}:${db_password}@${db_host}/${db_name}?read_timeout=60"
+# LP#1526938 - python-mysqldb supports this, python-pymysql does not
+if $::os_package_type == 'debian' {
+  $extra_params = { 'charset' => 'utf8', 'read_timeout' => 60 }
+} else {
+  $extra_params = { 'charset' => 'utf8' }
+}
+$db_connection = os_database_connection({
+  'dialect'  => $db_type,
+  'host'     => $db_host,
+  'database' => $db_name,
+  'username' => $db_user,
+  'password' => $db_password,
+  'extra'    => $extra_params
+})
 
-$memcache_nodes                 = get_nodes_hash_by_roles(hiera('network_metadata'), hiera('memcache_roles'))
-$cache_server_ip                = ipsort(values(get_node_to_ipaddr_map_by_network_role($memcache_nodes,'mgmt/memcache')))
-$memcached_addresses            = suffix($cache_server_ip, inline_template(":<%= @cache_server_port %>"))
+$memcached_servers              = hiera('memcached_addresses')
+$memcached_port                 = hiera('memcache_server_port', '11211')
+$memcached_addresses            = suffix($memcached_servers, ":${memcached_port}")
 $notify_on_state_change         = 'vm_and_task_state'
 
+$ssl_hash                       = hiera_hash('use_ssl', {})
+$admin_identity_protocol        = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'protocol', 'http')
+$admin_identity_address         = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'hostname', [$service_endpoint, $management_vip])
+$admin_identity_uri             = "${admin_identity_protocol}://${admin_identity_address}:35357"
+
+
+####### Disable upstart startup on install #######
+tweaks::ubuntu_service_override { 'nova-compute':
+  package_name => "nova-compute",
+}
 
 class { '::nova':
     install_utilities      => false,
     ensure_package         => installed,
-    database_connection    => $database_connection,
+    database_connection    => $db_connection,
     rpc_backend            => 'nova.openstack.common.rpc.impl_kombu',
     #FIXME(bogdando) we have to split amqp_hosts until all modules synced
     rabbit_hosts           => split($amqp_hosts, ','),
@@ -66,7 +90,7 @@ class { '::nova':
 
 class { '::nova::compute':
   ensure_package            => installed,
-  enabled                   => true,
+  enabled                   => false,
   vnc_enabled               => false,
   force_config_drive        => $nova_hash['force_config_drive'],
   #NOTE(bogdando) default became true in 4.0.0 puppet-nova (was false)
@@ -74,25 +98,51 @@ class { '::nova::compute':
   default_availability_zone => $nova_hash['default_availability_zone'],
   default_schedule_zone     => $nova_hash['default_schedule_zone'],
   reserved_host_memory      => '0',
+  compute_manager           => 'ironic.nova.compute.manager.ClusteredComputeManager',
 }
 
 
 class { 'nova::compute::ironic':
-  admin_url         => "http://${service_endpoint}:35357/v2.0",
-  admin_user        => $ironic_user,
+  admin_url         => "${admin_identity_uri}/v2.0",
+  admin_username    => $ironic_username,
   admin_tenant_name => $ironic_tenant,
-  admin_passwd      => $ironic_user_password,
+  admin_password    => $ironic_user_password,
   api_endpoint      => "http://${ironic_endpoint}:6385/v1",
 }
 
 class { 'nova::network::neutron':
   neutron_admin_password => $neutron_config['keystone']['admin_password'],
   neutron_url            => "http://${neutron_endpoint}:9696",
-  neutron_admin_auth_url => "http://${service_endpoint}:35357/v2.0",
+  neutron_admin_auth_url => "${admin_identity_uri}/v3",
+}
+
+cs_resource { "p_nova_compute_ironic":
+  ensure          => present,
+  primitive_class => 'ocf',
+  provided_by     => 'fuel',
+  primitive_type  => 'nova-compute',
+  metadata        => {
+    resource-stickiness => '1'
+  },
+  parameters      => {
+    config                => "/etc/nova/nova.conf",
+    pid                   => "/var/run/nova/nova-compute-ironic.pid",
+    additional_parameters => "--config-file=/etc/nova/nova-compute.conf",
+  },
+  operations      => {
+    monitor  => { timeout => '30', interval => '60' },
+    start    => { timeout => '30' },
+    stop     => { timeout => '30' }
+  }
+}
+
+service { "p_nova_compute_ironic":
+  ensure   => running,
+  enable   => true,
+  provider => 'pacemaker',
 }
 
 file { '/etc/nova/nova-compute.conf':
-  ensure  => absent,
+  content => "[DEFAULT]\nhost=ironic-compute",
   require => Package['nova-compute'],
-} ~> Service['nova-compute']
-
+} ~> Service['p_nova_compute_ironic']

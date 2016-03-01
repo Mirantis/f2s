@@ -12,6 +12,8 @@ $configure_user             = pick($ironic_hash['configure_user'], true)
 $configure_user_role        = pick($ironic_hash['configure_user_role'], true)
 $service_name               = pick($ironic_hash['service_name'], 'ironic')
 
+Class['::osnailyfacter::wait_for_keystone_backends'] -> Class['ironic::keystone::auth']
+
 $public_address = $public_ssl_hash['services'] ? {
   true    => $public_ssl_hash['hostname'],
   default => $public_vip,
@@ -22,13 +24,16 @@ $public_protocol = $public_ssl_hash['services'] ? {
 }
 
 $region                     = hiera('region', 'RegionOne')
+$tenant                     = pick($ironic_hash['tenant'], 'services')
 $public_url                 = "${public_protocol}://${public_address}:6385"
 $admin_url                  = "http://${management_vip}:6385"
 $internal_url               = "http://${management_vip}:6385"
 
+class {'::osnailyfacter::wait_for_keystone_backends':}
 class { 'ironic::keystone::auth':
   password            => $ironic_user_password,
   region              => $region,
+  tenant              => $tenant,
   public_url          => $public_url,
   internal_url        => $internal_url,
   admin_url           => $admin_url,
