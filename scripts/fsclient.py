@@ -37,8 +37,7 @@ class NailgunSource(object):
 
     def graph(self, uid):
         from fuelclient.client import APIClient as nailgun
-        rst = nailgun.get_request('clusters/{}/serialized_tasks'.format(uid))
-        return rst['tasks_graph']
+        return nailgun.get_request('clusters/{}/serialized_tasks'.format(uid))
 
 
 class DumbSource(object):
@@ -86,23 +85,41 @@ def dep_name(dep):
         return '{}_{}'.format(dep['name'], dep['node_id'])
 
 
+def create(*args, **kwargs):
+    try:
+        cr.create(*args, **kwargs)
+    except Exception as exc:
+        print exc
+
+
 @main.command()
 @click.argument('env')
 @click.argument('node')
 def alloc(env, node):
     dg = nx.DiGraph()
-    for task in source.graph(env)[node]:
+    response = source.graph(env)
+    graph = response['tasks_graph']
+    directory = response['tasks_directory']
+    for task in graph[node]:
+        meta = directory[task['id']]
         if node == 'null':
             name = task['id']
         else:
             name = '{}_{}'.format(task['id'], node)
 
         if task['type'] == 'skipped':
-            continue
-        try:
-            cr.create(name, 'f2s/' + task['id'])
-        except Exception as exc:
-            print exc
+            create(name, 'f2s/noop')
+        elif task['type'] == 'shell':
+            create(name, 'f2s/command', {
+                'cmd': meta['parameters']['cmd'],
+                'timeout': meta['parameters'].get('timeout', 30)})
+        elif task['type'] == 'sync':
+            create(name, 'resources/sources',
+                   {'sources': [meta['parameters']]})
+        elif task['type'] == 'puppet':
+            create(name, 'f2s/' + task['id'])
+        else:
+            print 'Unknown task type %s' % task
         for dep in task.get('requires', []):
             dg.add_edge(dep_name(dep), name)
         for dep in task.get('required_for', []):
