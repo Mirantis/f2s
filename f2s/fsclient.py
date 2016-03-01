@@ -87,7 +87,7 @@ def dep_name(dep):
 
 def create(*args, **kwargs):
     try:
-        cr.create(*args, **kwargs)
+        return resource.Resource(*args, **kwargs)
     except Exception as exc:
         print exc
 
@@ -96,6 +96,7 @@ def create(*args, **kwargs):
 @click.argument('env')
 @click.argument('node')
 def alloc(env, node):
+
     dg = nx.DiGraph()
     response = source.graph(env)
     graph = response['tasks_graph']
@@ -104,25 +105,31 @@ def alloc(env, node):
         meta = directory[task['id']]
         if node == 'null':
             name = task['id']
+            node_res = None
         else:
             name = '{}_{}'.format(task['id'], node)
-
+            node_res = resource.load('node%s' % node)
         if task['type'] == 'skipped':
-            create(name, 'f2s/noop')
+            res = create(name, 'f2s/noop')
         elif task['type'] == 'shell':
-            create(name, 'f2s/command', {
+            res = create(name, 'f2s/command', {
                 'cmd': meta['parameters']['cmd'],
                 'timeout': meta['parameters'].get('timeout', 30)})
         elif task['type'] == 'sync':
-            create(name, 'resources/sources',
-                   {'sources': [meta['parameters']]})
+            res = create(name, 'resources/sources',
+                         {'sources': [meta['parameters']]})
         elif task['type'] == 'copy_files':
-            create(name, 'resources/sources',
-                   {'sources': meta['parameters']['files']})
+            res = create(name, 'resources/sources',
+                         {'sources': meta['parameters']['files']})
         elif task['type'] == 'puppet':
-            create(name, 'f2s/' + task['id'])
+            res = create(name, 'f2s/' + task['id'])
+        elif task['type'] == 'upload_file':
+            # upload nodes info is not handled yet
+            pass
         else:
-            print 'Unknown task type %s' % task
+            raise Exception('Unknown task type %s' % task)
+        if node_res and res:
+            node_res.connect(res)
         for dep in task.get('requires', []):
             dg.add_edge(dep_name(dep), name)
         for dep in task.get('required_for', []):
@@ -142,8 +149,10 @@ def alloc(env, node):
 def prep(env_id, uids):
     for uid in uids:
         node = resource.load('node{}'.format(uid))
-        res = cr.create('fuel_data{}'.format(uid), 'f2s/fuel_data',
-                        {'uid': uid, 'env': env_id})
+        res = resource.Resource('fuel_data{}'.format(uid), 'f2s/fuel_data',
+                                {'uid': uid, 'env': env_id})
+        evapi.add_dep(res.name, 'pre_deployment_start',
+                      actions=('run', 'update'))
         node = resource.load('node{}'.format(uid))
         node.connect(res[0], {})
 
