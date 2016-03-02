@@ -114,8 +114,9 @@ def alloc(env, node):
                 'cmd': meta['parameters']['cmd'],
                 'timeout': meta['parameters'].get('timeout', 30)})
         elif task['type'] == 'sync':
-            res = create(name, 'resources/sources',
-                         {'sources': [meta['parameters']]})
+            res = create(name, 'f2s/sync',
+                         {'src': meta['parameters']['src'],
+                          'dst': meta['parameters']['dst']})
         elif task['type'] == 'copy_files':
             res = create(name, 'resources/sources',
                          {'sources': meta['parameters']['files']})
