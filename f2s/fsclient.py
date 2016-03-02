@@ -80,15 +80,10 @@ def nodes(uids):
 
 
 @main.command()
-@click.argument('env')
-def master(env):
+def master():
     master = source.master()
     cr.create('master', 'f2s/fuel_node',
               {'index': master[0], 'ip': master[1]})
-
-    cr.create('genkeys', 'f2s/genkeys', {
-        'node': 'node'+master[0],
-        'index': int(env)})
 
 
 def dep_name(dep):
