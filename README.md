@@ -16,7 +16,7 @@ All of this things will be automated by solar eventually
 
 ```
 mkdir /etc/solar
-echo solar_db: sqlite:////tmp/solar.db > /etc/solar/solar.conf 
+echo solar_db: sqlite:////tmp/solar.db > /etc/solar/solar.conf
 
 # create solar Resource defintions repository
 mkdir -p /var/lib/solar/repositories
@@ -27,6 +27,22 @@ solar repo update f2s f2s/created
 # clone solar-resources and create repositories
 git clone https://github.com/openstack/solar-resources.git
 solar repo import solar-resources/resources
+```
+
+workflow
+```
+# fetch nodes from nailgun and create node resources with transports
+fsclient nodes 2
+# create anchors from fuel graph
+fsclient alloc 2 null
+# create role data and dependency from role data to pre_deployment_start
+fsclient prep 2 2
+# generate all fuel tasks
+fsclient alloc 2 2
+
+solar ch stage
+solar ch process
+solar or run-once last
 ```
 
 # configure fuel node
