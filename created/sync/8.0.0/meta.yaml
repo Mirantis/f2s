@@ -1,0 +1,13 @@
+id: sync
+handler: shell
+version: 8.0.0
+actions:
+  run: run.sh
+  update: run.sh
+input:
+  src:
+    type: str!
+    value:
+  dst:
+    type: str!
+    value:
