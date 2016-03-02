@@ -133,19 +133,21 @@ class Task(object):
 
     def meta(self):
         if self.data['type'] == 'skipped':
-            data = OrderedDict([('id', self.name),
+            data = OrderedDict([
+                ('id', self.name),
                 ('handler', 'none'),
                 ('version', '8.0'),
                 ('inputs', {})])
         elif self.data['type'] == 'puppet':
             man_path = self.data['parameters']['puppet_manifest']
-            data = OrderedDict([('id', self.name),
-                    ('handler', 'puppetv2'),
-                    ('version', '8.0'),
-                    ('actions', {
-                        'run': man_path,
-                        'update': man_path}),
-                    ('input', {}),])
+            data = OrderedDict([
+                ('id', self.name),
+                ('handler', 'puppetv2'),
+                ('version', '8.0'),
+                ('actions', {
+                    'run': man_path,
+                    'update': man_path}),
+                ('input', self.inputs)])
         else:
             raise NotImplemented('Support for %s' % self.data['type'])
         return ordered_dump(data, default_flow_style=False)
@@ -158,28 +160,10 @@ class Task(object):
             return
         yield self.manifest, os.path.join(self.actions_path, 'run.pp')
 
+    @property
     def inputs(self):
-        """
-        Inputs prepared by
-
-        fuel_noop_tests.rb
-        identity = spec.split('/')[-1]
-        ENV["SPEC"] = identity
-
-        hiera.rb
-        File.open("/tmp/fuel_specs/#{ENV['SPEC']}", 'a') { |f| f << "- #{key}\n" }
-        """
-        print self.spec_name
-        lookup_stack_path = os.path.join(
-            INPUTS_LOCATION, self.spec_name)
-        if not os.path.exists(lookup_stack_path):
-            return {}
-
-        with open(lookup_stack_path) as f:
-            data = yaml.safe_load(f) or []
-        data = data + ['puppet_modules']
-        return {key: {'value': None} for key
-                in set(data) if '::' not in key}
+        return {'puppet_modules':
+                {'type': 'str!', 'value': '/etc/puppet/modules'}}
 
 
 class SingleTaskComposition(object):
