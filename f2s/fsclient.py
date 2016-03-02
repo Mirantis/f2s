@@ -131,8 +131,7 @@ def alloc(env, node):
         elif task['type'] == 'puppet':
             res = create(name, 'f2s/' + task['id'])
         elif task['type'] == 'upload_file':
-            # upload nodes info is not handled yet
-            pass
+            res = create(name, 'f2s/content', meta['parameters'])
         else:
             raise Exception('Unknown task type %s' % task)
         if node_res and res:
