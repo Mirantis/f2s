@@ -4,4 +4,7 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/ssl/ssl_dns_setup.pp
   update: /etc/puppet/modules/osnailyfacter/modular/ssl/ssl_dns_setup.pp
-input: {}
+input:
+  puppet_modules:
+    type: str!
+    value: /etc/puppet/modules

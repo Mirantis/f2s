@@ -4,4 +4,7 @@ version: '8.0'
 actions:
   run: /etc/puppet/modules/osnailyfacter/modular/astute/service_token_off.pp
   update: /etc/puppet/modules/osnailyfacter/modular/astute/service_token_off.pp
-input: {}
+input:
+  puppet_modules:
+    type: str!
+    value: /etc/puppet/modules
