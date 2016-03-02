@@ -1,0 +1,13 @@
+id: content
+handler: shell
+version: 8.0.0
+actions:
+  run: run.sh
+  update: run.sh
+input:
+  data:
+    type: str!
+    value:
+  path:
+    type: str!
+    value: /etc/astute.yaml
