@@ -18,10 +18,12 @@ All of this things will be automated by solar eventually
 mkdir /etc/solar
 echo solar_db: sqlite:////tmp/solar.db > /etc/solar/solar.conf
 
+# generate solar resource from library tasks
+f2s t2r --dir /tmp/f2s
+
 # create solar Resource defintions repository
 mkdir -p /var/lib/solar/repositories
-solar repo import f2s/vrs -n f2s
-solar repo update f2s f2s/resources
+solar repo import /tmp/f2s -n f2s
 solar repo update f2s f2s/created
 
 # clone solar-resources and create repositories
