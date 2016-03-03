@@ -38,9 +38,6 @@ cd %{_builddir}/%{name}-%{version} && PBR_VERSION=%{version} python setup.py ins
 #copy resources
 install -d -m 755 %{buildroot}%{_datadir}/f2s/
 cp -a %{_builddir}/%{name}-%{version}/created %{buildroot}%{_datadir}/f2s/
-cp -a %{_builddir}/%{name}-%{version}/patches %{buildroot}%{_datadir}/f2s/
-cp -a %{_builddir}/%{name}-%{version}/resources %{buildroot}%{_datadir}/f2s/
-cp -a %{_builddir}/%{name}-%{version}/vrs %{buildroot}%{_datadir}/f2s/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -48,4 +45,3 @@ rm -rf $RPM_BUILD_ROOT
 %files -f %{_builddir}/%{name}-%{version}/INSTALLED_FILES
 %defattr(0644,root,root,0755)
 %{_datadir}/f2s/*
-
