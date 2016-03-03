@@ -33,15 +33,13 @@ solar repo import solar-resources/resources
 
 workflow
 ```
-# fetch nodes from nailgun and create node resources with transports
-fsclient nodes 2
-# create anchors from fuel graph
-fsclient alloc 2 null
-# create role data and dependency from role data to pre_deployment_start
-fsclient prep 2 2
-# generate all fuel tasks
-fsclient alloc 2 2
+# prepare all configuration in fuel and then use fsclient to copy fuel env
+# with all configured nodes
+fsclient env 1
+# if u want to copy only specific list of nodes - use
+fsclient env 1 1 2 3
 
+# switc to usual solar workflow
 solar ch stage
 solar ch process
 solar or run-once last

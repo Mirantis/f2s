@@ -24,18 +24,11 @@ from solar import events as evapi
 from fuelclient.objects.environment import Environment
 
 
-@click.group()
-def main():
-    pass
-
-
 class NailgunSource(object):
 
     def nodes(self, uids):
         from fuelclient.objects.node import Node
-        nodes_obj = map(Node, uids)
-        return [(str(n.data['id']), str(n.data['ip']), str(n.data['cluster']))
-                for n in nodes_obj]
+        return map(Node, uids)
 
     def roles(self, uid):
         from fuelclient.objects.node import Node
@@ -53,37 +46,34 @@ class NailgunSource(object):
         return nailgun.get_request('clusters/{}/serialized_tasks'.format(uid))
 
 
-class DumbSource(object):
-
-    def nodes(self, uids):
-        ip_mask = '10.0.0.%s'
-        return [(int(uid), ip_mask % uid, 1) for uid in uids]
-
-    def roles(self, uid):
-        return ['primary-controller']
-
-    def master(self):
-        return 'master', '0.0.0.0'
-
-if os.environ.get('DEBUG_FSCLIENT'):
-    source = DumbSource()
-else:
-    source = NailgunSource()
-
-
-@main.command()
-@click.argument('uids', nargs=-1)
-def nodes(uids):
-    for uid, ip, env in source.nodes(uids):
-        cr.create('fuel_node', 'f2s/fuel_node',
-                  {'index': int(uid), 'ip': ip})
-
-
-@main.command()
-def master():
+def create_master():
     master = source.master()
-    cr.create('master', 'f2s/fuel_node',
-              {'index': master[0], 'ip': master[1]})
+    try:
+        cr.create('master', 'f2s/fuel_node',
+                  {'index': master[0], 'ip': master[1]})
+    except Exception as exc:
+        print exc
+
+
+source = NailgunSource()
+
+
+def node(nobj):
+    cr.create('fuel_node', 'f2s/fuel_node',
+              {'index': nobj.data['id'], 'ip': nobj.data['ip']})
+
+
+def fuel_data(nobj):
+    uid = str(nobj.data['id'])
+    env_id = nobj.data['cluster']
+    node = resource.load('node{}'.format(uid))
+    res = resource.Resource('fuel_data{}'.format(uid), 'f2s/fuel_data',
+                            {'uid': uid,
+                             'env': env_id})
+    evapi.add_react(res.name, 'pre_deployment_start',
+                    actions=('run', 'update'))
+    node = resource.load('node{}'.format(uid))
+    node.connect(res, {})
 
 
 def dep_name(dep):
@@ -100,86 +90,76 @@ def create(*args, **kwargs):
         print exc
 
 
-@main.command()
-@click.argument('env')
-@click.argument('node')
-def alloc(env, node):
-    dg = nx.DiGraph()
-    response = source.graph(env)
-    graph = response['tasks_graph']
-    directory = response['tasks_directory']
+def create_from_task(task, meta, node, node_res):
+    if node == 'null':
+        name = task['id']
+        node = None
+    else:
+        name = '{}_{}'.format(task['id'], node)
+    if task['type'] == 'skipped':
+        res = create(name, 'f2s/noop')
+    elif task['type'] == 'shell':
+        res = create(name, 'f2s/command', {
+            'cmd': meta['parameters']['cmd'],
+            'timeout': meta['parameters'].get('timeout', 30)})
+    elif task['type'] == 'sync':
+        res = create(name, 'f2s/sync',
+                     {'src': meta['parameters']['src'],
+                      'dst': meta['parameters']['dst']})
+    elif task['type'] == 'copy_files':
+        res = create(name, 'resources/sources',
+                     {'sources': meta['parameters']['files']})
+    elif task['type'] == 'puppet':
+        res = create(name, 'f2s/' + task['id'])
+    elif task['type'] == 'upload_file':
+        res = create(name, 'f2s/content', meta['parameters'])
+    else:
+        raise Exception('Unknown task type %s' % task)
+    if node_res and res:
+        node_res.connect(res)
+    for dep in task.get('requires', []):
+        yield dep['node_id'], dep['name'], node, task['id']
+    for dep in task.get('required_for', []):
+        yield node, task['id'], dep['node_id'], dep['name']
+
+
+def create_from_graph(graph, directory, node):
     node_res = resource.load('node%s' % node) if node != 'null' else None
     for task in graph[node]:
         meta = directory[task['id']]
-        if node == 'null':
-            name = task['id']
-        else:
-            name = '{}_{}'.format(task['id'], node)
-        if task['type'] == 'skipped':
-            res = create(name, 'f2s/noop')
-        elif task['type'] == 'shell':
-            res = create(name, 'f2s/command', {
-                'cmd': meta['parameters']['cmd'],
-                'timeout': meta['parameters'].get('timeout', 30)})
-        elif task['type'] == 'sync':
-            res = create(name, 'f2s/sync',
-                         {'src': meta['parameters']['src'],
-                          'dst': meta['parameters']['dst']})
-        elif task['type'] == 'copy_files':
-            res = create(name, 'resources/sources',
-                         {'sources': meta['parameters']['files']})
-        elif task['type'] == 'puppet':
-            res = create(name, 'f2s/' + task['id'])
-        elif task['type'] == 'upload_file':
-            res = create(name, 'f2s/content', meta['parameters'])
-        else:
-            raise Exception('Unknown task type %s' % task)
-        if node_res and res:
-            node_res.connect(res)
-        for dep in task.get('requires', []):
-            dg.add_edge(dep_name(dep), name)
-        for dep in task.get('required_for', []):
-            dg.add_edge(name, dep_name(dep))
-    for u, v in dg.edges():
-        if u == v:
+        for edge in create_from_task(task, meta, node, node_res):
+            yield edge
+
+
+def name_from(node, task_name):
+    if node:
+        return task_name + '_' + node
+    return task_name
+
+
+def allocate(nailgun_graph, uids):
+    edges = []
+    graph = nailgun_graph['tasks_graph']
+    directory = nailgun_graph['tasks_directory']
+    for uid in uids:
+        for edge in create_from_graph(graph, directory, uid):
+            edges.append(edge)
+    for node_u, u, node_v, v in edges:
+        if (node_u, u) == (node_v, v):
             continue
+        name_u = name_from(node_u, u)
+        name_v = name_from(node_v, v)
         try:
-            if node == 'null':
-                evapi.add_react(u, v, actions=('run', 'update'))
+            # anchors of deployment should be always present in graph
+            if node_u is None and node_v is None:
+                evapi.add_react(name_u, name_v, actions=('run', 'update'))
             else:
-                evapi.add_dep(u, v, actions=('run', 'update'))
+                evapi.add_dep(name_u, name_v, actions=('run', 'update'))
         except Exception as exc:
             print exc
 
 
-@main.command()
-@click.argument('env_id', type=click.INT)
-@click.argument('uids', nargs=-1)
-def prep(env_id, uids):
-    for uid in uids:
-        node = resource.load('node{}'.format(uid))
-        res = resource.Resource('fuel_data{}'.format(uid), 'f2s/fuel_data',
-                                {'uid': uid, 'env': env_id})
-        evapi.add_react(res.name, 'pre_deployment_start',
-                        actions=('run', 'update'))
-        node = resource.load('node{}'.format(uid))
-        node.connect(res, {})
-
-
-@main.command()
-@click.argument('uids', nargs=-1)
-def roles(uids):
-    for uid, ip, env in source.nodes(uids):
-        for role in source.roles(uid):
-            cr.create(role, 'f2s/role_'+role,
-                      {'index': uid, 'env': env, 'node': 'node'+str(uid)})
-
-
-@main.command()
-@click.argument('env_id', type=click.INT)
-@click.argument('uids', nargs=-1)
-def prefetch(env_id, uids):
-    env = Environment(env_id)
+def _prefetch(env, uids):
     facts = env.get_default_facts('deployment', uids)
     facts = {node['uid']: node for node in facts}
     for uid in uids:
@@ -190,6 +170,72 @@ def prefetch(env_id, uids):
             if key not in res_args:
                 res.input_add(key)
         res.update(node_facts)
+
+
+@click.group()
+def main():
+    pass
+
+
+@main.command()
+def master():
+    create_master()
+
+
+@main.command()
+@click.argument('env_id')
+def init(env_id):
+    """Prepares anchors and master tasks for environment,
+    create master resource if it doesnt exist
+    """
+    create_master()
+    allocate(source.graph(env_id), ['null', 'master'])
+
+
+@main.command()
+@click.argument('uids', nargs=-1)
+def nodes(uids):
+    """Creates nodes with transports and fuel_data resource for each node
+    """
+    for nobj in source.nodes(uids):
+        node(nobj)
+        fuel_data(nobj)
+
+
+@main.command()
+@click.argument('env_id')
+@click.argument('uids', nargs=-1)
+def assign(env_id, uids):
+    """Assign resources to nodes based on fuel tasks
+    """
+    graph = source.graph(env_id)
+    allocate(graph, uids)
+
+
+@main.command()
+@click.argument('env_id', type=click.INT)
+@click.argument('uids', nargs=-1)
+def prefetch(env_id, uids):
+    """Update fuel data with most recent data
+    """
+    _prefetch(Environment(env_id), uids)
+
+
+@main.command()
+@click.argument('env_id')
+@click.argument('uids', nargs=-1)
+def env(env_id, uids):
+    """Prepares solar environment based on fuel environment.
+    It should perform all required changes for solar to work
+    """
+    env = Environment(env_id)
+    uids = uids or [str(n.data['id']) for n in env.get_all_nodes()]
+    for nobj in source.nodes(uids):
+        node(nobj)
+        fuel_data(nobj)
+    _prefetch(env, uids)
+    create_master()
+    allocate(source.graph(env_id), ['null', 'master'] + uids)
 
 
 if __name__ == '__main__':
