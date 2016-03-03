@@ -31,7 +31,7 @@ def ensure_dir(dir):
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
 
-LIBRARY_PATH = os.path.join('..', 'fuel-library')
+LIBRARY_PATH = os.path.join('..', 'fuel-library', 'deployment')
 RESOURCE_TMP_WORKDIR = os.path.join(CURDIR, 'tmp/resources')
 ensure_dir(RESOURCE_TMP_WORKDIR)
 RESOURCE_DIR = os.path.join(CURDIR, 'resources')
@@ -98,22 +98,6 @@ class Task(object):
 
     def is_conditional(self):
         return bool(self.data.get('condition'))
-
-    @property
-    def manifest(self):
-        if self.data['type'] != 'puppet':
-            return None
-        after_naily = self.data['parameters']['puppet_manifest'].split('osnailyfacter/')[-1]
-        return os.path.join(
-            LIBRARY_PATH, 'deployment', 'puppet', 'osnailyfacter',
-            after_naily)
-
-    @property
-    def spec_name(self):
-        splitted = self.data['parameters']['puppet_manifest'].split('/')
-        directory = splitted[-2]
-        name = splitted[-1].split('.')[0]
-        return "{}_{}_spec.rb'".format(directory, name)
 
     @property
     def relative_path(self):
@@ -271,8 +255,8 @@ def create(task, target_directory=RESOURCE_DIR):
         f.write(task.meta())
 
 
-def get_tasks():
-    for base, task_yaml in get_files(LIBRARY_PATH + '/deployment'):
+def get_tasks(tasks):
+    for base, task_yaml in get_files(os.path.join(tasks)):
         for item in load_data(base, task_yaml):
             yield Task(item, base)
 
@@ -296,11 +280,12 @@ def main():
 @click.option('-p', is_flag=True)
 @click.option('-c', is_flag=True)
 @click.option('--dir', default=RESOURCE_DIR)
-def t2r(tasks, t, p, c, dir):
+@click.option('--lib', default=LIBRARY_PATH)
+def t2r(tasks, t, p, c, dir, lib):
     if c:
         clean_resources()
 
-    for task in get_tasks():
+    for task in get_tasks(lib):
         if task.type not in VALID_TASKS:
             continue
 

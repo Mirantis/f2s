@@ -18,8 +18,8 @@ All of this things will be automated by solar eventually
 mkdir /etc/solar
 echo solar_db: sqlite:////tmp/solar.db > /etc/solar/solar.conf
 
-# generate solar resource from library tasks
-f2s t2r --dir /tmp/f2s
+# generate solar resources from library tasks
+f2s t2r --dir /tmp/f2s --lib /etc/puppet/modules
 
 # create solar Resource defintions repository
 mkdir -p /var/lib/solar/repositories
