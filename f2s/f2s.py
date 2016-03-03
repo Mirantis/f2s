@@ -31,17 +31,17 @@ def ensure_dir(dir):
 
 CURDIR = os.path.dirname(os.path.realpath(__file__))
 
-LIBRARY_PATH = os.path.join('..', 'fuel-library')
+LIBRARY_PATH = os.path.join('..', 'fuel-library', 'deployment')
 RESOURCE_TMP_WORKDIR = os.path.join(CURDIR, 'tmp/resources')
 ensure_dir(RESOURCE_TMP_WORKDIR)
 RESOURCE_DIR = os.path.join(CURDIR, 'resources')
 VR_TMP_DIR = os.path.join(CURDIR, 'tmp/vrs')
 ensure_dir(VR_TMP_DIR)
 INPUTS_LOCATION = "/root/current/"
-DEPLOYMENT_GROUP_PATH = os.path.join(LIBRARY_PATH,
-    'deployment', 'puppet', 'deployment_groups', 'tasks.yaml')
+DEPLOYMENT_GROUP_PATH = os.path.join(
+    LIBRARY_PATH, 'deployment', 'puppet', 'deployment_groups', 'tasks.yaml')
 
-VALID_TASKS = ('puppet', 'skipped')
+VALID_TASKS = ('puppet',)
 
 
 def clean_resources():
@@ -100,50 +100,16 @@ class Task(object):
         return bool(self.data.get('condition'))
 
     @property
-    def manifest(self):
-        if self.data['type'] != 'puppet':
-            return None
-        after_naily = self.data['parameters']['puppet_manifest'].split('osnailyfacter/')[-1]
-        return os.path.join(
-            LIBRARY_PATH, 'deployment', 'puppet', 'osnailyfacter',
-            after_naily)
-
-    @property
-    def spec_name(self):
-        splitted = self.data['parameters']['puppet_manifest'].split('/')
-        directory = splitted[-2]
-        name = splitted[-1].split('.')[0]
-        return "{}_{}_spec.rb'".format(directory, name)
-
-    @property
-    def dst_path(self):
-        return os.path.join(RESOURCE_TMP_WORKDIR, self.name)
-
-    @property
-    def actions_path(self):
-        return os.path.join(self.dst_path, 'actions')
-
-    @property
-    def meta_path(self):
-        return os.path.join(self.dst_path, 'meta.yaml')
-
-    @property
     def relative_path(self):
         return 'f2s/' + self.name
 
     def meta(self):
-        if self.data['type'] == 'skipped':
-            data = OrderedDict([
-                ('id', self.name),
-                ('handler', 'none'),
-                ('version', '8.0'),
-                ('inputs', {})])
-        elif self.data['type'] == 'puppet':
+        if self.data['type'] == 'puppet':
             man_path = self.data['parameters']['puppet_manifest']
             data = OrderedDict([
                 ('id', self.name),
                 ('handler', 'puppetv2'),
-                ('version', '8.0'),
+                ('version', '8.0.0'),
                 ('actions', {
                     'run': man_path,
                     'update': man_path}),
@@ -151,14 +117,6 @@ class Task(object):
         else:
             raise NotImplemented('Support for %s' % self.data['type'])
         return ordered_dump(data, default_flow_style=False)
-
-    @property
-    def actions(self):
-        """yield an iterable of src/dst
-        """
-        if self.manifest is None:
-            return
-        yield self.manifest, os.path.join(self.actions_path, 'run.pp')
 
     @property
     def inputs(self):
@@ -283,8 +241,6 @@ def load_data(base, file_name):
 
 
 def preview(task):
-    print 'PATH'
-    print task.dst_path
     print 'META'
     print task.meta()
     print 'ACTIONS'
@@ -292,19 +248,15 @@ def preview(task):
         print 'src=%s dst=%s' % action
 
 
-def create(task):
-    ensure_dir(task.dst_path)
-    if task.actions_path:
-        ensure_dir(task.actions_path)
-        for src, dst in task.actions:
-            shutil.copyfile(src, dst)
-
-    with open(task.meta_path, 'w') as f:
+def create(task, target_directory=RESOURCE_DIR):
+    directory = os.path.join(target_directory, task.name)
+    ensure_dir(directory)
+    with open(os.path.join(directory, 'meta.yaml'), 'w') as f:
         f.write(task.meta())
 
 
-def get_tasks():
-    for base, task_yaml in get_files(LIBRARY_PATH + '/deployment'):
+def get_tasks(tasks):
+    for base, task_yaml in get_files(os.path.join(tasks)):
         for item in load_data(base, task_yaml):
             yield Task(item, base)
 
@@ -327,11 +279,13 @@ def main():
 @click.option('-t', is_flag=True)
 @click.option('-p', is_flag=True)
 @click.option('-c', is_flag=True)
-def t2r(tasks, t, p, c):
+@click.option('--dir', default=RESOURCE_DIR)
+@click.option('--lib', default=LIBRARY_PATH)
+def t2r(tasks, t, p, c, dir, lib):
     if c:
         clean_resources()
 
-    for task in get_tasks():
+    for task in get_tasks(lib):
         if task.type not in VALID_TASKS:
             continue
 
@@ -339,7 +293,7 @@ def t2r(tasks, t, p, c):
             if p:
                 preview(task)
             else:
-                create(task)
+                create(task, target_directory=dir)
 
 
 @main.command(help='convert groups into templates')
