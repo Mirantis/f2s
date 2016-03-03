@@ -45,3 +45,4 @@ rm -rf $RPM_BUILD_ROOT
 %files -f %{_builddir}/%{name}-%{version}/INSTALLED_FILES
 %defattr(0644,root,root,0755)
 %{_datadir}/f2s/*
+
