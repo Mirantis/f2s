@@ -90,50 +90,71 @@ def create(*args, **kwargs):
         print exc
 
 
-def allocate(nailgun_graph, node):
-    dg = nx.DiGraph()
-    graph = nailgun_graph['tasks_graph']
-    directory = nailgun_graph['tasks_directory']
+def create_from_task(task, meta, node, node_res):
+    if node == 'null':
+        name = task['id']
+        node = None
+    else:
+        name = '{}_{}'.format(task['id'], node)
+    if task['type'] == 'skipped':
+        res = create(name, 'f2s/noop')
+    elif task['type'] == 'shell':
+        res = create(name, 'f2s/command', {
+            'cmd': meta['parameters']['cmd'],
+            'timeout': meta['parameters'].get('timeout', 30)})
+    elif task['type'] == 'sync':
+        res = create(name, 'f2s/sync',
+                     {'src': meta['parameters']['src'],
+                      'dst': meta['parameters']['dst']})
+    elif task['type'] == 'copy_files':
+        res = create(name, 'resources/sources',
+                     {'sources': meta['parameters']['files']})
+    elif task['type'] == 'puppet':
+        res = create(name, 'f2s/' + task['id'])
+    elif task['type'] == 'upload_file':
+        res = create(name, 'f2s/content', meta['parameters'])
+    else:
+        raise Exception('Unknown task type %s' % task)
+    if node_res and res:
+        node_res.connect(res)
+    for dep in task.get('requires', []):
+        yield dep['node_id'], dep['name'], node, task['id']
+    for dep in task.get('required_for', []):
+        yield node, task['id'], dep['node_id'], dep['name']
+
+
+def create_from_graph(graph, directory, node):
     node_res = resource.load('node%s' % node) if node != 'null' else None
     for task in graph[node]:
         meta = directory[task['id']]
-        if node == 'null':
-            name = task['id']
-        else:
-            name = '{}_{}'.format(task['id'], node)
-        if task['type'] == 'skipped':
-            res = create(name, 'f2s/noop')
-        elif task['type'] == 'shell':
-            res = create(name, 'f2s/command', {
-                'cmd': meta['parameters']['cmd'],
-                'timeout': meta['parameters'].get('timeout', 30)})
-        elif task['type'] == 'sync':
-            res = create(name, 'f2s/sync',
-                         {'src': meta['parameters']['src'],
-                          'dst': meta['parameters']['dst']})
-        elif task['type'] == 'copy_files':
-            res = create(name, 'resources/sources',
-                         {'sources': meta['parameters']['files']})
-        elif task['type'] == 'puppet':
-            res = create(name, 'f2s/' + task['id'])
-        elif task['type'] == 'upload_file':
-            res = create(name, 'f2s/content', meta['parameters'])
-        else:
-            raise Exception('Unknown task type %s' % task)
-        if node_res and res:
-            node_res.connect(res)
-        for dep in task.get('requires', []):
-            dg.add_edge(dep_name(dep), name)
-        for dep in task.get('required_for', []):
-            dg.add_edge(name, dep_name(dep))
-    for u, v in dg.edges():
-        if u == v:
+        for edge in create_from_task(task, meta, node, node_res):
+            yield edge
+
+
+def name_from(node, task_name):
+    if node:
+        return task_name + '_' + node
+    return task_name
+
+
+def allocate(nailgun_graph, uids):
+    edges = []
+    graph = nailgun_graph['tasks_graph']
+    directory = nailgun_graph['tasks_directory']
+    for uid in uids:
+        for edge in create_from_graph(graph, directory, uid):
+            edges.append(edge)
+    for node_u, u, node_v, v in edges:
+        if (node_u, u) == (node_v, v):
             continue
+        name_u = name_from(node_u, u)
+        name_v = name_from(node_v, v)
         try:
-            if node == 'null':
-                evapi.add_react(u, v, actions=('run', 'update'))
+            # anchors of deployment should be always present in graph
+            if node_u is None and node_v is None:
+                evapi.add_react(name_u, name_v, actions=('run', 'update'))
             else:
-                evapi.add_dep(u, v, actions=('run', 'update'))
+                evapi.add_dep(name_u, name_v, actions=('run', 'update'))
         except Exception as exc:
             print exc
 
@@ -167,10 +188,8 @@ def init(env_id):
     """Prepares anchors and master tasks for environment,
     create master resource if it doesnt exist
     """
-    graph = source.graph(env_id)
     create_master()
-    for name in ['null', 'master']:
-        allocate(graph, name)
+    allocate(source.graph(env_id), ['null', 'master'])
 
 
 @main.command()
@@ -190,8 +209,7 @@ def assign(env_id, uids):
     """Assign resources to nodes based on fuel tasks
     """
     graph = source.graph(env_id)
-    for uid in uids:
-        allocate(graph, uid)
+    allocate(graph, uids)
 
 
 @main.command()
@@ -217,9 +235,7 @@ def env(env_id, uids):
         fuel_data(nobj)
     _prefetch(env, uids)
     create_master()
-    graph = source.graph(env_id)
-    for name in ['null', 'master'] + uids:
-        allocate(graph, name)
+    allocate(source.graph(env_id), ['null', 'master'] + uids)
 
 
 if __name__ == '__main__':
