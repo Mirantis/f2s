@@ -24,18 +24,11 @@ from solar import events as evapi
 from fuelclient.objects.environment import Environment
 
 
-@click.group()
-def main():
-    pass
-
-
 class NailgunSource(object):
 
     def nodes(self, uids):
         from fuelclient.objects.node import Node
-        nodes_obj = map(Node, uids)
-        return [(str(n.data['id']), str(n.data['ip']), str(n.data['cluster']))
-                for n in nodes_obj]
+        return map(Node, uids)
 
     def roles(self, uid):
         from fuelclient.objects.node import Node
@@ -53,37 +46,34 @@ class NailgunSource(object):
         return nailgun.get_request('clusters/{}/serialized_tasks'.format(uid))
 
 
-class DumbSource(object):
-
-    def nodes(self, uids):
-        ip_mask = '10.0.0.%s'
-        return [(int(uid), ip_mask % uid, 1) for uid in uids]
-
-    def roles(self, uid):
-        return ['primary-controller']
-
-    def master(self):
-        return 'master', '0.0.0.0'
-
-if os.environ.get('DEBUG_FSCLIENT'):
-    source = DumbSource()
-else:
-    source = NailgunSource()
-
-
-@main.command()
-@click.argument('uids', nargs=-1)
-def nodes(uids):
-    for uid, ip, env in source.nodes(uids):
-        cr.create('fuel_node', 'f2s/fuel_node',
-                  {'index': int(uid), 'ip': ip})
-
-
-@main.command()
-def master():
+def create_master():
     master = source.master()
-    cr.create('master', 'f2s/fuel_node',
-              {'index': master[0], 'ip': master[1]})
+    try:
+        cr.create('master', 'f2s/fuel_node',
+                  {'index': master[0], 'ip': master[1]})
+    except Exception as exc:
+        print exc
+
+
+source = NailgunSource()
+
+
+def node(nobj):
+    cr.create('fuel_node', 'f2s/fuel_node',
+              {'index': nobj.data['id'], 'ip': nobj.data['ip']})
+
+
+def fuel_data(nobj):
+    uid = str(nobj.data['id'])
+    env_id = nobj.data['cluster']
+    node = resource.load('node{}'.format(uid))
+    res = resource.Resource('fuel_data{}'.format(uid), 'f2s/fuel_data',
+                            {'uid': uid,
+                             'env': env_id})
+    evapi.add_react(res.name, 'pre_deployment_start',
+                    actions=('run', 'update'))
+    node = resource.load('node{}'.format(uid))
+    node.connect(res, {})
 
 
 def dep_name(dep):
@@ -100,14 +90,10 @@ def create(*args, **kwargs):
         print exc
 
 
-@main.command()
-@click.argument('env')
-@click.argument('node')
-def alloc(env, node):
+def allocate(nailgun_graph, node):
     dg = nx.DiGraph()
-    response = source.graph(env)
-    graph = response['tasks_graph']
-    directory = response['tasks_directory']
+    graph = nailgun_graph['tasks_graph']
+    directory = nailgun_graph['tasks_directory']
     node_res = resource.load('node%s' % node) if node != 'null' else None
     for task in graph[node]:
         meta = directory[task['id']]
@@ -152,34 +138,7 @@ def alloc(env, node):
             print exc
 
 
-@main.command()
-@click.argument('env_id', type=click.INT)
-@click.argument('uids', nargs=-1)
-def prep(env_id, uids):
-    for uid in uids:
-        node = resource.load('node{}'.format(uid))
-        res = resource.Resource('fuel_data{}'.format(uid), 'f2s/fuel_data',
-                                {'uid': uid, 'env': env_id})
-        evapi.add_react(res.name, 'pre_deployment_start',
-                        actions=('run', 'update'))
-        node = resource.load('node{}'.format(uid))
-        node.connect(res, {})
-
-
-@main.command()
-@click.argument('uids', nargs=-1)
-def roles(uids):
-    for uid, ip, env in source.nodes(uids):
-        for role in source.roles(uid):
-            cr.create(role, 'f2s/role_'+role,
-                      {'index': uid, 'env': env, 'node': 'node'+str(uid)})
-
-
-@main.command()
-@click.argument('env_id', type=click.INT)
-@click.argument('uids', nargs=-1)
-def prefetch(env_id, uids):
-    env = Environment(env_id)
+def _prefetch(env, uids):
     facts = env.get_default_facts('deployment', uids)
     facts = {node['uid']: node for node in facts}
     for uid in uids:
@@ -190,6 +149,77 @@ def prefetch(env_id, uids):
             if key not in res_args:
                 res.input_add(key)
         res.update(node_facts)
+
+
+@click.group()
+def main():
+    pass
+
+
+@main.command()
+def master():
+    create_master()
+
+
+@main.command()
+@click.argument('env_id')
+def init(env_id):
+    """Prepares anchors and master tasks for environment,
+    create master resource if it doesnt exist
+    """
+    graph = source.graph(env_id)
+    create_master()
+    for name in ['null', 'master']:
+        allocate(graph, name)
+
+
+@main.command()
+@click.argument('uids', nargs=-1)
+def nodes(uids):
+    """Creates nodes with transports and fuel_data resource for each node
+    """
+    for nobj in source.nodes(uids):
+        node(nobj)
+        fuel_data(nobj)
+
+
+@main.command()
+@click.argument('env_id')
+@click.argument('uids', nargs=-1)
+def assign(env_id, uids):
+    """Assign resources to nodes based on fuel tasks
+    """
+    graph = source.graph(env_id)
+    for uid in uids:
+        allocate(graph, uid)
+
+
+@main.command()
+@click.argument('env_id', type=click.INT)
+@click.argument('uids', nargs=-1)
+def prefetch(env_id, uids):
+    """Update fuel data with most recent data
+    """
+    _prefetch(Environment(env_id), uids)
+
+
+@main.command()
+@click.argument('env_id')
+@click.argument('uids', nargs=-1)
+def env(env_id, uids):
+    """Prepares solar environment based on fuel environment.
+    It should perform all required changes for solar to work
+    """
+    env = Environment(env_id)
+    uids = uids or [str(n.data['id']) for n in env.get_all_nodes()]
+    for nobj in source.nodes(uids):
+        node(nobj)
+        fuel_data(nobj)
+    _prefetch(env, uids)
+    create_master()
+    graph = source.graph(env_id)
+    for name in ['null', 'master'] + uids:
+        allocate(graph, name)
 
 
 if __name__ == '__main__':
