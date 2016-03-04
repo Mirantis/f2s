@@ -224,18 +224,22 @@ def prefetch(env_id, uids):
 @main.command()
 @click.argument('env_id')
 @click.argument('uids', nargs=-1)
-def env(env_id, uids):
+@click.option('-f', '--full', is_flag=True)
+def env(env_id, uids, full):
     """Prepares solar environment based on fuel environment.
     It should perform all required changes for solar to work
     """
     env = Environment(env_id)
-    uids = uids or [str(n.data['id']) for n in env.get_all_nodes()]
+    uids = list(uids) if uids else [
+        str(n.data['id']) for n in env.get_all_nodes()]
     for nobj in source.nodes(uids):
         node(nobj)
         fuel_data(nobj)
     _prefetch(env, uids)
     create_master()
-    allocate(source.graph(env_id), ['null', 'master'] + uids)
+    allocate(
+        source.graph(env_id),
+        ['null', 'master'] + uids if full else uids)
 
 
 if __name__ == '__main__':
