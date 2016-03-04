@@ -17,6 +17,7 @@ import os
 
 import networkx as nx
 import click
+import solar
 from solar.core.resource import composer as cr
 from solar.core import resource
 from solar.dblayer.model import ModelMeta
@@ -49,10 +50,10 @@ class NailgunSource(object):
 def create_master():
     master = source.master()
     try:
+        resource.load('nodemaster')
+    except solar.dblayer.model.DBLayerNotFound:
         cr.create('master', 'f2s/fuel_node',
                   {'index': master[0], 'ip': master[1]})
-    except Exception as exc:
-        print exc
 
 
 source = NailgunSource()
