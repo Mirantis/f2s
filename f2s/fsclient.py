@@ -238,8 +238,12 @@ def env(env_id, uids, full):
     uids = list(uids) if uids else [
         str(n.data['id']) for n in env.get_all_nodes()]
     for nobj in source.nodes(uids):
-        node(nobj)
-        fuel_data(nobj)
+        try:
+            # FIXME
+            resource.load('node%s' % nobj.data['id'])
+        except:
+            node(nobj)
+            fuel_data(nobj)
     _prefetch(env, uids)
     create_master()
     allocate(
