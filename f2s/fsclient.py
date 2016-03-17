@@ -17,10 +17,11 @@ import os
 
 import networkx as nx
 import click
+import solar
 from solar.core.resource import composer as cr
 from solar.core import resource
 from solar.dblayer.model import ModelMeta
-from solar import events as evapi
+from solar.events import api as evapi
 from fuelclient.objects.environment import Environment
 
 
@@ -49,10 +50,10 @@ class NailgunSource(object):
 def create_master():
     master = source.master()
     try:
+        resource.load('nodemaster')
+    except solar.dblayer.model.DBLayerNotFound:
         cr.create('master', 'f2s/fuel_node',
                   {'index': master[0], 'ip': master[1]})
-    except Exception as exc:
-        print exc
 
 
 source = NailgunSource()
@@ -70,8 +71,12 @@ def fuel_data(nobj):
     res = resource.Resource('fuel_data{}'.format(uid), 'f2s/fuel_data',
                             {'uid': uid,
                              'env': env_id})
-    evapi.add_react(res.name, 'pre_deployment_start',
-                    actions=('run', 'update'))
+    events = [
+        evapi.React(res.name, 'run', 'success',
+                    'pre_deployment_start', 'run'),
+        evapi.React(res.name, 'update', 'success',
+                    'pre_deployment_start', 'run')]
+    evapi.add_events(res.name, events)
     node = resource.load('node{}'.format(uid))
     node.connect(res, {})
 
@@ -85,9 +90,9 @@ def dep_name(dep):
 
 def create(*args, **kwargs):
     try:
-        return resource.Resource(*args, **kwargs)
+        return resource.load(args[0])
     except Exception as exc:
-        print exc
+        return resource.Resource(*args, **kwargs)
 
 
 def create_from_task(task, meta, node, node_res):
@@ -224,18 +229,26 @@ def prefetch(env_id, uids):
 @main.command()
 @click.argument('env_id')
 @click.argument('uids', nargs=-1)
-def env(env_id, uids):
+@click.option('-f', '--full', is_flag=True)
+def env(env_id, uids, full):
     """Prepares solar environment based on fuel environment.
     It should perform all required changes for solar to work
     """
     env = Environment(env_id)
-    uids = uids or [str(n.data['id']) for n in env.get_all_nodes()]
+    uids = list(uids) if uids else [
+        str(n.data['id']) for n in env.get_all_nodes()]
     for nobj in source.nodes(uids):
-        node(nobj)
-        fuel_data(nobj)
+        try:
+            # FIXME
+            resource.load('node%s' % nobj.data['id'])
+        except:
+            node(nobj)
+            fuel_data(nobj)
     _prefetch(env, uids)
     create_master()
-    allocate(source.graph(env_id), ['null', 'master'] + uids)
+    allocate(
+        source.graph(env_id),
+        ['null', 'master'] + uids if full else uids)
 
 
 if __name__ == '__main__':

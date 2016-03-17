@@ -31,11 +31,17 @@ git clone https://github.com/openstack/solar-resources.git
 solar repo import solar-resources/resources
 ```
 
+before doing any deployment using solar - provision nodes
+```
+# provision a node by fuel
+fuel node --node 1 --provision
+```
+
 workflow
 ```
 # prepare all configuration in fuel and then use fsclient to copy fuel env
-# with all configured nodes
-fsclient env 1
+# with all configured nodes, -f flag adds master and null preudo role
+fsclient env 1 -f
 # if u want to copy only specific list of nodes - use
 fsclient env 1 1 2 3
 
@@ -45,94 +51,30 @@ solar ch process
 solar or run-once last
 ```
 
-# configure fuel node
+Handling updates
 
+1. adding a new node
 ```
-# provision a node by fuel
-fuel node --node 1 --provision
-
-# run on each remote
-mkdir /var/lib/astute
-mkdir /etc/puppet/hieradata
-```
-
-#f2s.py
-
-This script converts tasks.yaml + library actions into solar resources,
-vrs, and events.
-
-1. Based on tasks.yaml meta.yaml is generated, you can take a look on example
-at f2s/resources/netconfig/meta.yaml
-2. Based on hiera lookup we generated inputs for each resource, patches can be
-found at f2s/patches
-3. VRs (f2s/vrs) generated based on dependencies between tasks and roles
-
-#fsclient.py
-
-This script helps to create solar resource with some of nailgun data.
-Note, you should run it inside of the solar container.
-
-`./f2s/fsclient.py master 1`
-Accepts cluster id, prepares transports for master + generate keys task
-for current cluster.
-
-`./f2s/fsclient.py nodes 1`
-Prepares transports for provided nodes, ip and cluster id fetchd from nailgun.
-
-`./f2s/fsclient.py prep 1`
-Creates tasks for syncing keys + fuel-library modules.
-
-`./f2s/fsclient.py roles 1`
-Based on roles stored in nailgun we will assign vrs/<role>.yaml to a given
-node. Right now it takes while, so be patient.
-
-#fetching data from nailgun
-
-Special entity added which allows to fetch data from any source
-*before* any actual deployment.
-This entity provides mechanism to specify *manager* for resource (or list of them).
-Manager accepts inputs as json in stdin, and outputs result in stdout,
-with result of manager execution we will update solar storage.
-
-Examples can be found at f2s/resources/role_data/managers.
-
-Data will be fetched on solar command
-
-`solar res prefetch -n <resource name>`
-
-# TODO
-
-Configure hiera, without it changes in resource will not be seen. It's ok for now.
-```
- :backends:
-  - yaml
-  #- json
-:yaml:
-  :datadir: /etc/puppet/hieradata
-:json:
-  :datadir: /etc/puppet/hieradata
-:hierarchy:
-  - "%{resource_name}"
-  - resource
+# environment 1 with node 4 was created
+fsclient env 1 4 -f
+# then node with uid 3 needs to be added, but running next command wont be enough
+fsclient env 1 3
+# it will create only new node, without updating edges for 4th node that points to
+# 3rd, correct way to handle it will be
+fsclient env 1 3 4
 ```
 
-
-#basic troubleshooting
-
-If there are any Fuel plugin installed, you should manually
-create a stanza for it in the `./f2s/resources/role_data/meta.yaml`,
-like:
+2. adding a role to a deployed node (any partial changes of fuel graph)
 ```
-input:
-  foo_plugin_name:
-    value: null
+# fetch graph and make sure that fuel_data is changed, on change of
+# fuel_data - stages will be inserted in the graph
+fsclient env 1 4
 ```
-
-And regenerate the data from nailgun,
-
-To regenerate the deployment data to Solar resources make
-```
-solar res clear_all
-```
-
-and repeat all of the fsclient.py and fetching nailgun data steps
+Updating partially graph has some caveats - sometime nailgun may rely
+on skipped tasks to preserve correct order of execution, however if some of
+such tasks were commited with 1st role - solar may generate incorrect graph
+from nailgun point of view. For now it is not clear how to address this issue.
+For an example of such issue - create controller, commit it with solar, and then
+add cinder to the same node. You will see that tasks ntp-client and top-role-cinder
+can be run in parallel, which should be the case - they are in different
+stages.
