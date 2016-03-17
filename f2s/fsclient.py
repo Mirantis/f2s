@@ -53,15 +53,15 @@ def create_master():
         resource.load('nodemaster')
     except solar.dblayer.model.DBLayerNotFound:
         cr.create('master', 'f2s/fuel_node',
-                  {'index': master[0], 'ip': master[1]})
-
+                  {'index': master[0], 'ip': master[1]}, tags=['nodemaster'])
 
 source = NailgunSource()
 
 
 def node(nobj):
     cr.create('fuel_node', 'f2s/fuel_node',
-              {'index': nobj.data['id'], 'ip': nobj.data['ip']})
+              {'index': nobj.data['id'], 'ip': nobj.data['ip']},
+              tags=['node%s' % nobj.data['id']])
 
 
 def fuel_data(nobj):
@@ -70,7 +70,7 @@ def fuel_data(nobj):
     node = resource.load('node{}'.format(uid))
     res = resource.Resource('fuel_data{}'.format(uid), 'f2s/fuel_data',
                             {'uid': uid,
-                             'env': env_id})
+                             'env': env_id}, tags=['node%s' % nobj.data['id']])
     events = [
         evapi.React(res.name, 'run', 'success',
                     'pre_deployment_start', 'run'),
@@ -99,25 +99,27 @@ def create_from_task(task, meta, node, node_res):
     if node == 'null':
         name = task['id']
         node = None
+        tags = ['base']
     else:
         name = '{}_{}'.format(task['id'], node)
+        tags = ['node%s' % node]
     if task['type'] == 'skipped':
-        res = create(name, 'f2s/noop')
+        res = create(name, 'f2s/noop', tags=tags)
     elif task['type'] == 'shell':
         res = create(name, 'f2s/command', {
             'cmd': meta['parameters']['cmd'],
-            'timeout': meta['parameters'].get('timeout', 30)})
+            'timeout': meta['parameters'].get('timeout', 30)}, tags=tags)
     elif task['type'] == 'sync':
         res = create(name, 'f2s/sync',
                      {'src': meta['parameters']['src'],
-                      'dst': meta['parameters']['dst']})
+                      'dst': meta['parameters']['dst']}, tags=tags)
     elif task['type'] == 'copy_files':
         res = create(name, 'resources/sources',
-                     {'sources': meta['parameters']['files']})
+                     {'sources': meta['parameters']['files']}, tags=tags)
     elif task['type'] == 'puppet':
-        res = create(name, 'f2s/' + task['id'])
+        res = create(name, 'f2s/' + task['id'], tags=tags)
     elif task['type'] == 'upload_file':
-        res = create(name, 'f2s/content', meta['parameters'])
+        res = create(name, 'f2s/content', meta['parameters'], tags=tags)
     else:
         raise Exception('Unknown task type %s' % task)
     if node_res and res:
